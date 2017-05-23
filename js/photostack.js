@@ -24,7 +24,6 @@
 		Modernizr.testStyles('#modernizr{' + prop + ':' + val + ';}', function (el, rule) {
 			computedStyle = window.getComputedStyle ? getComputedStyle(el, null).getPropertyValue(prop) : '';
 		});
-
 		return (computedStyle === val);
 	});
 
@@ -103,7 +102,6 @@
 
 	Photostack.prototype._init = function() {
 		this.currentItem = this.items[ this.current ];
-		this._addNavigation();
 		this._getSizes();
 		this._initEvents();
 	}
@@ -117,7 +115,6 @@
 		}
 		this.nav.innerHTML = inner;
 		this.el.appendChild( this.nav );
-		this.navDots = [].slice.call( this.nav.children );
 	}
 
 	Photostack.prototype._initEvents = function() {
@@ -150,24 +147,6 @@
 			open();
 		}
 
-		this.navDots.forEach( function( dot, idx ) {
-			dot.addEventListener( 'click', function() {
-				// rotate the photo if clicking on the current dot
-				if( idx === self.current ) {
-					self._rotateItem();
-				}
-				else {
-					// if the photo is flipped then rotate it back before shuffling again
-					var callback = function() { self._showPhoto( idx ); }
-					if( self.flipped ) {
-						self._rotateItem( callback );
-					}
-					else {
-						callback();
-					}
-				}
-			} );
-		} );
 
 		window.addEventListener( 'resize', function() { self._resizeHandler(); } );
 	}
@@ -204,22 +183,13 @@
 		// if there is something behind..
 		if( classie.hasClass( this.currentItem, 'photostack-flip' ) ) {
 			this._removeItemPerspective();
-			classie.removeClass( this.navDots[ this.current ], 'flippable' );
 		}
 
-		classie.removeClass( this.navDots[ this.current ], 'current' );
 		classie.removeClass( this.currentItem, 'photostack-current' );
 
 		// change current
 		this.current = pos;
 		this.currentItem = this.items[ this.current ];
-
-		classie.addClass( this.navDots[ this.current ], 'current' );
-		// if there is something behind..
-		if( this.currentItem.querySelector( '.photostack-back' ) ) {
-			// nav dot gets class flippable
-			classie.addClass( this.navDots[ pos ], 'flippable' );
-		}
 
 		// shuffle a bit
 		this._shuffle();
@@ -267,6 +237,7 @@
 							yVal = i * (self.sizes.item.height * overlapFactor) - extraY,
 							olx = 0, oly = 0;
 						// if everything is at the begining, it's ok to overlap the center
+						console.log(self.started, iter, 'iter');
 						if( self.started && iter === 0 ) {
 							var ol = self._isOverlapping( { x : xVal, y : yVal } );
 							if( ol.overlapping ) {
@@ -279,7 +250,6 @@
 								}
 							}
 						}
-
 						col[ j ] = { x : xVal + olx, y : yVal + oly };
 					}
 				}
@@ -318,29 +288,23 @@
 								}
 							}
 						};
-					// if it's the current image it goes to the center
-					if(self.items.indexOf(item) === self.current && self.started && iter === 0) {
-						self.currentItem.style.WebkitTransform = 'translate(' + self.centerItem.x + 'px,' + self.centerItem.y + 'px) rotate(0deg)';
-						self.currentItem.style.msTransform = 'translate(' + self.centerItem.x + 'px,' + self.centerItem.y + 'px) rotate(0deg)';
-						self.currentItem.style.transform = 'translate(' + self.centerItem.x + 'px,' + self.centerItem.y + 'px) rotate(0deg)';
-						// if there is something behind..
-						if( self.currentItem.querySelector( '.photostack-back' ) ) {
-							self._addItemPerspective();
-						}
-						classie.addClass( self.currentItem, 'photostack-current' );
-					}
-					// else it goes to the translated point
-					else {
-						if (item.tags) {
-							console.log(item.dataset.tag);
+						if (self.options.tags &&  self.started) {
+							// console.log(  );
+							if(item.dataset.tag === self.options.tags[0]){
+								var transformation = 'translate(' + (self.sizes.inner.width/8 *5) + 'px,' + (self.sizes.inner.height/4) + 'px) rotate(' + Math.floor( Math.random() * (maxrot - minrot + 1) + minrot ) + 'deg)';
+							}else{
+								var transformation = 'translate(' + (self.sizes.inner.width/8) + 'px,' + (self.sizes.inner.height/4) + 'px) rotate(' + Math.floor( Math.random() * (maxrot - minrot + 1) + minrot ) + 'deg)';
+							}
+
+							item.style.WebkitTransform = transformation;
+							item.style.msTransform = transformation;
+							item.style.transform = transformation;
 						}else{
 							var transformation = 'translate(' + translation.x + 'px,' + translation.y + 'px) rotate(' + Math.floor( Math.random() * (maxrot - minrot + 1) + minrot ) + 'deg)';
 							item.style.WebkitTransform = transformation;
 							item.style.msTransform = transformation;
 							item.style.transform = transformation;
 						}
-
-					}
 
 					if( self.started ) {
 						if( support.transitions ) {
@@ -379,7 +343,6 @@
 			itemVal.y > ( areaVal.y + dyArea )) ) {
 				// how much to move so it does not overlap?
 				// move left / or move right
-				var tagged = this.options.tagged;
 				var tags = this.options.tags;
 				console.log(this);
 				var left = Math.random() < 0.5,
@@ -422,7 +385,6 @@
 				};
 
 			if( this.flipped ) {
-				classie.removeClass( this.navDots[ this.current ], 'flip' );
 				if( support.preserve3d ) {
 					this.currentItem.style.WebkitTransform = 'translate(' + this.centerItem.x + 'px,' + this.centerItem.y + 'px) rotateY(0deg)';
 					this.currentItem.style.transform = 'translate(' + this.centerItem.x + 'px,' + this.centerItem.y + 'px) rotateY(0deg)';
@@ -432,7 +394,6 @@
 				}
 			}
 			else {
-				classie.addClass( this.navDots[ this.current ], 'flip' );
 				if( support.preserve3d ) {
 					this.currentItem.style.WebkitTransform = 'translate(' + this.centerItem.x + 'px,' + this.centerItem.y + 'px) translate(' + this.sizes.item.width + 'px) rotateY(-179.9deg)';
 					this.currentItem.style.transform = 'translate(' + this.centerItem.x + 'px,' + this.centerItem.y + 'px) translate(' + this.sizes.item.width + 'px) rotateY(-179.9deg)';

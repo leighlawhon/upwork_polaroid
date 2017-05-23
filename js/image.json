@@ -4,90 +4,90 @@
     "image_link": "http://goo.gl/49lN3k",
     "alt": "alt text",
     "caption": "<p>this is html</p>" ,
-    "tag": 1
+    "tag": "image1"
   },{
     "image_url": "img/2.jpg",
     "image_link": "http://goo.gl/49lN3k",
     "alt": "alt text",
     "caption": "<p>this is html</p>",
-    "tag": 2
+    "tag": "image2"
   },{
     "image_url": "img/3.jpg",
     "image_link": "http://goo.gl/49lN3k",
     "alt": "alt text",
     "caption": "<p>this is html</p>",
-    "tag": 1
+    "tag": "image1"
   },{
     "image_url": "img/4.jpg",
     "image_link": "http://goo.gl/49lN3k",
     "alt": "alt text",
     "caption": "<p>this is html</p>",
-    "tag": 2
+    "tag": "image2"
   },{
     "image_url": "img/5.jpg",
     "image_link": "http://goo.gl/49lN3k",
     "alt": "alt text",
     "caption": "<p>this is html</p>",
-    "tag": 2
+    "tag": "image2"
   },{
     "image_url": "img/6.jpg",
     "image_link": "http://goo.gl/49lN3k",
     "alt": "alt text",
     "caption": "<p>this is html</p>",
-    "tag": 2
+    "tag": "image2"
   },{
     "image_url": "img/7.jpg",
     "image_link": "http://goo.gl/49lN3k",
     "alt": "alt text",
     "caption": "<p>this is html</p>",
-    "tag": 1
+    "tag": "image1"
   },{
     "image_url": "img/8.jpg",
     "image_link": "http://goo.gl/49lN3k",
     "alt": "alt text",
     "caption": "<p>this is html</p>",
-    "tag": 2
+    "tag": "image2"
   },{
     "image_url": "img/9.jpg",
     "image_link": "http://goo.gl/49lN3k",
     "alt": "alt text",
     "caption": "<p>this is html</p>",
-    "tag": 2
+    "tag": "image2"
   },{
     "image_url": "img/10.jpg",
     "image_link": "http://goo.gl/49lN3k",
     "alt": "alt text",
     "caption": "<p>this is html</p>",
-    "tag": 2
+    "tag": "image2"
   },{
     "image_url": "img/11.jpg",
     "image_link": "http://goo.gl/49lN3k",
     "alt": "alt text",
     "caption": "<p>this is html</p>",
-    "tag": 2
+    "tag": "image2"
   },{
     "image_url": "img/12.jpg",
     "image_link": "http://goo.gl/49lN3k",
     "alt": "alt text",
     "caption": "<p>this is html</p>",
-    "tag": 2
+    "tag": "image2"
   },{
     "image_url": "img/13.jpg",
     "image_link": "http://goo.gl/49lN3k",
     "alt": "alt text",
     "caption": "<p>this is html</p>",
-    "tag": 2
+    "tag": "image2"
   },{
     "image_url": "img/14.jpg",
     "image_link": "http://goo.gl/49lN3k",
     "alt": "alt text",
     "caption": "<p>this is html</p>",
-    "tag": 2
+    "tag": "image2"
   },{
     "image_url": "img/15.jpg",
     "image_link": "http://goo.gl/49lN3k",
     "alt": "alt text",
     "caption": "<p>this is html</p>",
-    "tag": 2
+    "tag": "image2"
   }
 ]
