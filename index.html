@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Custom Scattered Polaroids</title>
+		<meta name="description" content="Scattered Polaroids Gallery: A flat-style take on a Polaroid gallery" />
+		<meta name="keywords" content="scattered polaroids, image gallery, javascript, random rotation, 3d, backface, flat design" />
+		<meta name="author" content="Codrops" />
+		<link rel="stylesheet" type="text/css" href="css/normalize.css" />
+		<link rel="stylesheet" type="text/css" href="css/demo.css" />
+		<link rel="stylesheet" type="text/css" href="css/component.css" />
+		<script src="js/modernizr.min.js"></script>
+	</head>
+	<body>
+		<div class="container">
+			<section id="photostack-2" class="photostack photostack-start">
+				<div>
+					<figure>
+						<a href="http://goo.gl/49lN3k" class="photostack-img"><img src="img/4.jpg" alt="img04"/></a>
+						<figcaption>
+							<h2 class="photostack-title">Heaven of time</h2>
+							<div class="photostack-back">
+								<p>What might be right for you may not be right for some. And we know Flipper lives in a world full of wonder flying there-under under the sea.</p>
+							</div>
+						</figcaption>
+					</figure>
+				</div>
+			</section>
+
+
+		</div><!-- /container -->
+		<script src="js/classie.js"></script>
+		<script src="js/loadImages.js"></script>
+		<script src="js/photostack.js"></script>
+		<script>
+			imageJson.addImages(
+				'js/image.json',
+				'photostack-2',
+				function() {
+					new Photostack( document.getElementById( 'photostack-2' ), {
+						callback : function( item ) {
+							//console.log(item)
+						},
+						// tags:[1,2]
+					})
+				});
+
+		</script>
+	</body>
+</html>
