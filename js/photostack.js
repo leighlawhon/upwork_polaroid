@@ -86,6 +86,7 @@
 	function Photostack( el, options ) {
 		this.el = el;
 		this.inner = this.el.querySelector( 'div' );
+
 		this.allItems = [].slice.call( this.inner.children );
 		this.allItemsCount = this.allItems.length;
 		if( !this.allItemsCount ) return;
@@ -96,6 +97,14 @@
 		this.options = extend( {}, this.options );
   		extend( this.options, options );
   		this._init();
+			if(this.options.tags){
+				var set = {0:[],1:[], selected:0};
+				for (var i = 0; i < this.allItems.length; i++) {
+					console.log(this.allItems[i].dataset.tag);
+					this.allItems[i].dataset.tag === this.options.tags[0] ? set[0].push(this.allItems[i]) : set[1].push(this.allItems[i])
+				}
+				this.stacks = set
+			}
 	}
 
 	Photostack.prototype.options = {};
@@ -140,14 +149,37 @@
 
 		if( beforeStep ) {
 			this._shuffle();
-			open();
+			var container = this.el
+			var screen =  this.sizes.inner;
+			var tags = this.options.tags
+			setTimeout(function(){ addOverlay(container, screen, tags) }, 500);
+			var setStack = function(e){
+				e.x > (screen.width/2) ? openStack(0) : openStack(1);
+			}
+			function addOverlay(container, screen, tags) {
+				open();
+				container.addEventListener('click', setStack)
+			}
+			//
+			function openStack(tag){
+				container.removeEventListener('click', setStack);
+				var elements = document.querySelectorAll('.' + self.options.tags[tag]);
+				tag? self.stacks.selected = 0: self.stacks.selected = 1;
+				for (var i = 0; i < elements.length; i++) {
+					classie.addClass( elements[i], 'hide' );
+				}
+				self._grid();
+			}
 		}
 		else {
+			console.log('after');
 			open();
 		}
-
-
-		window.addEventListener( 'resize', function() { self._resizeHandler(); } );
+		window.addEventListener( 'resize', function() {
+			if(!classie.hasClass(self.el, 'photostack-grid')){
+				self._resizeHandler();
+			}
+		});
 	}
 
 	Photostack.prototype._resizeHandler = function() {
@@ -205,7 +237,6 @@
 			this.openDefault = false;
 			this.isShuffling = false;
 		}
-
 		var overlapFactor = .5,
 			// lines & columns
 			// the window width / an item widtha nd the over lap which is .5 lines = a % of the screen
@@ -236,7 +267,7 @@
 							yVal = i * (self.sizes.item.height * overlapFactor) - extraY,
 							olx = 0, oly = 0;
 						// if everything is at the begining, it's ok to overlap the center
-						console.log(self.started, iter, 'iter');
+						// console.log(self.started, iter, 'iter');
 						if( self.started && iter === 0 ) {
 							var ol = self._isOverlapping( { x : xVal, y : yVal } );
 							if( ol.overlapping ) {
@@ -256,6 +287,7 @@
 				grid = shuffleMArray(grid);
 				var l = 0, c = 0, cntItemsAnim = 0;
 				self.allItems.forEach( function( item, i ) {
+					console.log(item);
 					// pick a random item from the grid
 					if( l === lines - 1 ) {
 						c = c === columns - 1 ? 0 : c + 1;
@@ -290,14 +322,15 @@
 						if (self.options.tags &&  self.started) {
 							// console.log(  );
 							if(item.dataset.tag === self.options.tags[0]){
-								var transformation = 'translate(' + (self.sizes.inner.width/8 *5) + 'px,' + (self.sizes.inner.height/4) + 'px) rotate(' + Math.floor( Math.random() * (maxrot - minrot + 1) + minrot ) + 'deg)';
-							}else{
 								var transformation = 'translate(' + (self.sizes.inner.width/8) + 'px,' + (self.sizes.inner.height/4) + 'px) rotate(' + Math.floor( Math.random() * (maxrot - minrot + 1) + minrot ) + 'deg)';
+							}else{
+								var transformation = 'translate(' + (self.sizes.inner.width/8 *5) + 'px,' + (self.sizes.inner.height/4) + 'px) rotate(' + Math.floor( Math.random() * (maxrot - minrot + 1) + minrot ) + 'deg)';
 							}
 
 							item.style.WebkitTransform = transformation;
 							item.style.msTransform = transformation;
 							item.style.transform = transformation;
+							classie.removeClass(item, 'hide')
 						}else{
 							var transformation = 'translate(' + translation.x + 'px,' + translation.y + 'px) rotate(' + Math.floor( Math.random() * (maxrot - minrot + 1) + minrot ) + 'deg)';
 							item.style.WebkitTransform = transformation;
@@ -319,9 +352,100 @@
 		moveItems.call();
 	}
 
+	// display items in grid
+	Photostack.prototype._grid = function( resize ) {
+		var iter = resize ? 1 : this.currentItem.getAttribute( 'data-shuffle-iteration' ) || 1;
+		console.log(this);
+		var backButton = document.createElement('button'),
+		galleryHead = document.createElement('h1');
+		galleryHead.innerHTML = 'Gallery ' + (this.stacks.selected + 1)
+		backButton.innerHTML = 'Back';
+		self=this,
+		backButton.onclick = function(){
+			self._shuffle();
+		};
+// Prepend it
+		this.el.insertBefore(backButton, this.el.firstChild);
+		this.el.insertBefore(galleryHead, this.el.firstChild);
+		var
+			// lines & columns
+			// the window width / an item widtha nd the over lap which is .5 lines = a % of the screen
+			lines = Math.ceil(this.sizes.inner.width / (this.sizes.item.width) ),
+			// collumns = screen height/ height of the item * 0.5 = total items on screen
+			columns = Math.ceil(this.sizes.inner.height / (this.sizes.item.height) );
+			// since we are rounding up the previous calcs we need to know how much more we are adding to the calcs for both x and y axis
+
+		this._createGrid(iter, columns, lines);
+	}
+	Photostack.prototype._createGrid = function(iter, columns, lines) {
+		--iter;
+		// create a "grid" of possible positions
+		var grid = [];
+		// populate the positions grid
+		// for each collum ()
+		for( var i = 0; i < columns; ++i ) {
+			var col = grid[ i ] = [];
+			for( var j = 0; j < lines; ++j ) {
+				// xVal = [1-11] * (width * .5) - extraX
+				var xVal = j * this.sizes.item.width,
+					yVal = i * this.sizes.item.height,
+					olx = 0, oly = 0;
+				col[ j ] = { x : xVal, y : yVal };
+			}
+		}
+		var self = this;
+		var getItems = function (){
+			if(self.stacks){
+				return self.stacks[self.stacks.selected];
+			}else{
+				return self.allItems;
+			}
+		}
+
+		this._placeItemsOnGrid(getItems(), grid, columns, lines, false);
+	};
+	Photostack.prototype._placeItemsOnGrid = function (items, grid, columns, lines, shuffle){
+
+		var l = 0, c = 0, cntItemsAnim = 0;
+		var self = this;
+		items.forEach( function( item, i ) {
+			// pick a random item from the grid
+			if( l === lines - 1 ) {
+				c = c === columns - 1 ? 0 : c + 1;
+				l = 1;
+			}
+			else {
+				++l
+			}
+
+			var gridVal = grid[c][l-1],
+				translation = { x : gridVal.x, y : gridVal.y },
+				onEndTransitionFn = function() {
+					++cntItemsAnim;
+					if( support.transitions ) {
+						this.removeEventListener( transEndEventName, onEndTransitionFn );
+					}
+				};
+
+				var transformation = 'translate(' + translation.x + 'px,' + translation.y + 'px) ';
+				item.style.WebkitTransform = transformation;
+				item.style.msTransform = transformation;
+				item.style.transform = transformation;
+				classie.addClass(self.el, 'photostack-grid')
+
+			if( self.started ) {
+				if( support.transitions ) {
+					item.addEventListener( transEndEventName, onEndTransitionFn );
+				}
+				else {
+					onEndTransitionFn();
+				}
+			}
+		} );
+	}
 	Photostack.prototype._getSizes = function() {
 		this.sizes = {
-			inner : { width : this.inner.offsetWidth, height : this.inner.offsetHeight },
+			inner : { width : this.inner.offsetWidth, height : (this.inner.offsetHeight > 0? this.inner.offsetHeight : window.innerHeight) },
 			item : { width : this.currentItem.offsetWidth, height : this.currentItem.offsetHeight }
 		};
 
@@ -341,14 +465,14 @@
 			( itemVal.y + dyItem ) < areaVal.y ||
 			itemVal.y > ( areaVal.y + dyArea )) ) {
 				// how much to move so it does not overlap?
-				// move left / or move right
+				// move right / or move right
 				var tags = this.options.tags;
-				console.log(this);
-				var left = Math.random() < 0.5,
+				// console.log(this);
+				var right = Math.random() > 0.5,
 					randExtraX = Math.floor( Math.random() * (dxItem/4 + 1) ),
 					randExtraY = Math.floor( Math.random() * (dyItem/4 + 1) ),
-					noOverlapX = left ? (itemVal.x - areaVal.x + dxItem) * -1 - randExtraX : (areaVal.x + dxArea) - (itemVal.x + dxItem) + dxItem + randExtraX,
-					noOverlapY = left ? (itemVal.y - areaVal.y + dyItem) * -1 - randExtraY : (areaVal.y + dyArea) - (itemVal.y + dyItem) + dyItem + randExtraY;
+					noOverlapX = right ? (itemVal.x - areaVal.x + dxItem) * -1 - randExtraX : (areaVal.x + dxArea) - (itemVal.x + dxItem) + dxItem + randExtraX,
+					noOverlapY = right ? (itemVal.y - areaVal.y + dyItem) * -1 - randExtraY : (areaVal.y + dyArea) - (itemVal.y + dyItem) + dyItem + randExtraY;
 
 				return {
 					overlapping : true,

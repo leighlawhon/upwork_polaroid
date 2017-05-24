@@ -17,11 +17,11 @@
 }
 
 .js .photostack {
-	height: 580px;
+	min-height: 580px;
 }
 
 .photostack-start {
-	/*cursor: pointer;*/
+	cursor: pointer;
 }
 
 /* Wrapper and figures */
@@ -169,13 +169,97 @@
 
 /* Overlays */
 
+/* Initial overlay on photostack container */
+.js .photostack-transition::before {
+	content: '';
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	background: rgba(0,0,0,0.5);
+	top: 0;
+	left: 0;
+	z-index: 100;
+	-webkit-transition: opacity 1s, visibility 1s 1s;
+	transition: opacity 1s, visibility 1s 1s;
+}
+/*hide if grid*/
+.js .photostack-transition.photostack-grid::before {
+	content: none;
+	position: absolute;
+	width: 0%;
+	height: 0%;
+}
+.js .photostack-transition.photostack-grid{
+	overflow: scroll;
+}
+.js .photostack-transition::before {
+	-webkit-transition: opacity 1s;
+	transition: opacity 1s;
+}
 
-/*.js .photostack-start::before {
-	-webkit-transition: opacity 0.3s;
-	transition: opacity 0.3s;
+/* Button on photostack container */
+/*.js .photostack-transition::after {
+	content: 'View Gallery 1';
+	font-weight: 400;
+	position: absolute;
+	border: 3px solid #fff;
+	text-align: center;
+	white-space: nowrap;
+	left: 50%;
+	top: 50%;
+	-webkit-transform: translateY(-50%) translateX(-50%);
+	transform: translateY(-50%) translateX(-50%);
+	padding: 10px 20px;
+	color: #fff;
+	text-transform: uppercase;
+	letter-spacing: 1px;
+	cursor: pointer;
+	z-index: 101;
 }*/
 
+.js .photostack-transition::before,
+.js .photostack-transition::after {
+	opacity: 0;
+	visibility: hidden;
+}
 
+.js .photostack-transition::before,
+.js .photostack-transition:hover::after,
+.touch .photostack-transition::after  {
+	opacity: 1;
+	visibility: visible;
+}
+
+/* Overlay on figure */
+.photostack figure::after {
+	content: '';
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	top: 0;
+	left: 0;
+	visibility: visible;
+	opacity: 1;
+	background: rgba(0,0,0,0.05);
+	-webkit-transition: opacity 0.6s;
+	transition: opacity 0.6s;
+}
+
+/* Hide figure overlay when it becomes current */
+figure.photostack-current::after {
+	-webkit-transition: opacity 0.6s, visibility 0s 0.6s;
+	transition: opacity 0.6s, visibility 0s 0.6s;
+	opacity: 0;
+	visibility: hidden;
+}
+
+figure.hide{
+	-webkit-transition: opacity 1s, visibility 0s 1s;
+	transition: opacity 1s, visibility 0s 1s;
+	opacity: 0;
+	visibility: hidden;
+	left:-5000px;
+}
 /* Special classes for transitions and perspective */
 .photostack-transition figure {
 	-webkit-transition: -webkit-transform 0.6s ease-in-out;

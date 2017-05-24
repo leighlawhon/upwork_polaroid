@@ -13,9 +13,11 @@ export default StyleSheet.create({
         "overflow": "hidden"
     },
     "js photostack": {
-        "height": 580
+        "minHeight": 580
     },
-    "photostack-start": {},
+    "photostack-start": {
+        "cursor": "pointer"
+    },
     "photostack > div": {
         "width": "100%",
         "height": "100%",
@@ -163,6 +165,67 @@ export default StyleSheet.create({
         "opacity": 1,
         "WebkitTransitionDelay": "0.4s",
         "transitionDelay": "0.4s"
+    },
+    "js photostack-transition::before": {
+        "content": "''",
+        "position": "absolute",
+        "width": "100%",
+        "height": "100%",
+        "background": "rgba(0,0,0,0.5)",
+        "top": 0,
+        "left": 0,
+        "zIndex": 100,
+        "WebkitTransition": "opacity 1s",
+        "transition": "opacity 1s",
+        "opacity": 1,
+        "visibility": "visible"
+    },
+    "js photostack-transitionphotostack-grid::before": {
+        "content": "none",
+        "position": "absolute",
+        "width": "0%",
+        "height": "0%"
+    },
+    "js photostack-transitionphotostack-grid": {
+        "overflow": "scroll"
+    },
+    "js photostack-transition::after": {
+        "opacity": 0,
+        "visibility": "hidden"
+    },
+    "js photostack-transition:hover::after": {
+        "opacity": 1,
+        "visibility": "visible"
+    },
+    "touch photostack-transition::after": {
+        "opacity": 1,
+        "visibility": "visible"
+    },
+    "photostack figure::after": {
+        "content": "''",
+        "position": "absolute",
+        "width": "100%",
+        "height": "100%",
+        "top": 0,
+        "left": 0,
+        "visibility": "visible",
+        "opacity": 1,
+        "background": "rgba(0,0,0,0.05)",
+        "WebkitTransition": "opacity 0.6s",
+        "transition": "opacity 0.6s"
+    },
+    "figurephotostack-current::after": {
+        "WebkitTransition": "opacity 0.6s, visibility 0s 0.6s",
+        "transition": "opacity 0.6s, visibility 0s 0.6s",
+        "opacity": 0,
+        "visibility": "hidden"
+    },
+    "figurehide": {
+        "WebkitTransition": "opacity 1s, visibility 0s 1s",
+        "transition": "opacity 1s, visibility 0s 1s",
+        "opacity": 0,
+        "visibility": "hidden",
+        "left": -5000
     },
     "photostack-transition figure": {
         "WebkitTransition": "-webkit-transform 0.6s ease-in-out",
