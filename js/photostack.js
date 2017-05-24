@@ -127,7 +127,6 @@
 					}
 				}
 				if( beforeStep ) {
-					this.removeEventListener( 'click', open );
 					classie.removeClass( self.el, 'photostack-start' );
 					setTransition();
 				}
@@ -141,7 +140,7 @@
 
 		if( beforeStep ) {
 			this._shuffle();
-			this.el.addEventListener( 'click', open );
+			open();
 		}
 		else {
 			open();
