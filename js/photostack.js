@@ -129,7 +129,7 @@
 	Photostack.prototype._initEvents = function() {
 		var self = this,
 			beforeStep = classie.hasClass( this.el, 'photostack-start' ),
-			open = function() {
+			openRandom = function() {
 				var setTransition = function() {
 					if( support.transitions ) {
 						classie.addClass( self.el, 'photostack-transition' );
@@ -157,7 +157,7 @@
 				e.x > (screen.width/2) ? openStack(0) : openStack(1);
 			}
 			function addOverlay(container, screen, tags) {
-				open();
+				openRandom();
 				container.addEventListener('click', setStack)
 			}
 			//
@@ -173,7 +173,7 @@
 		}
 		else {
 			console.log('after');
-			open();
+			openRandom();
 		}
 		window.addEventListener( 'resize', function() {
 			if(!classie.hasClass(self.el, 'photostack-grid')){
