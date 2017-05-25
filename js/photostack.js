@@ -116,71 +116,86 @@
 	}
 
 	Photostack.prototype._initEvents = function() {
-		this.el.addEventListener('click', clickOverlay)
-		var self = this,
-			beforeStep = classie.hasClass( this.el, 'photostack-start' ),
-			openRandom = function() {
-				var setTransition = function() {
-					if( support.transitions ) {
-						classie.addClass( self.el, 'photostack-transition' );
-					}
-				}
-				if( beforeStep ) {
-					classie.removeClass( self.el, 'photostack-start' );
-					setTransition();
-				}
-				else {
-					self.openDefault = true;
-					setTimeout( setTransition, 25 );
-				}
-				self.started = true;
-				self._showPhoto( self.current );
-			};
-
+		var PS = this,
+			beforeStep = classie.hasClass( PS.el, 'photostack-start' );
 		if( beforeStep ) {
-			this._shuffle();
-			var container = this.el
-			var screen =  this.sizes.inner;
-			var tags = this.options.tags
-			setTimeout(function(){ addOverlay(container, screen, tags) }, 500);
-			function addOverlay(container, screen, tags) {
-				openRandom();
-				console.log(self);
-			}
-			//
-
+			PS._shuffle();
+			var container = PS.el
+			var screen =  PS.sizes.inner;
+			var tags = PS.options.tags
+			setTimeout(function(){ PS._addOverlay(beforeStep) }, 500);
 		}
 		else {
-			console.log('after');
-			openRandom();
+			// this will throw and error...need to see when this is called
+			openToPiles();
 		}
 		window.addEventListener( 'resize', function() {
-			if(!classie.hasClass(self.el, 'photostack-grid')){
-				self._resizeHandler();
+			if(!classie.hasClass(PS.el, 'photostack-grid')){
+				PS._resizeHandler();
 			}
 		});
 	}
-
-	Photostack.prototype._resizeHandler = function() {
-		var self = this;
-		function delayed() {
-			self._resize();
-			self._resizeTimeout = null;
+	Photostack.prototype._addOverlay = function(beforeStep){
+		var
+		PS = this,
+		openToPiles = function() {
+			var setTransition = function() {
+				if( support.transitions ) {
+					classie.addClass( PS.el, 'photostack-transition' );
+				}
+			}
+			if( beforeStep ) {
+				classie.removeClass( PS.el, 'photostack-start' );
+				setTransition();
+			}
+			else {
+				PS.openDefault = true;
+				setTimeout( setTransition, 25 );
+			}
+			PS.started = true;
+			PS._showPhoto( PS.current );
+		},
+		clickOverlay = function(e){
+			e.target.removeEventListener('click', clickOverlay);
+			e.x > (screen.width/2) ? PS._openStack(0) : PS._openStack(1);
 		}
-		if ( this._resizeTimeout ) {
-			clearTimeout( this._resizeTimeout );
+		PS.el.addEventListener('click', clickOverlay);
+		var galleryHead = document.createElement('h1');
+		galleryHead.innerHTML = 'Polaroid Gallery '
+		PS._addHeader(galleryHead);
+		openToPiles();
+	};
+	Photostack.prototype._openStack = function(tag){
+		var PS = this
+		var elements = document.querySelectorAll('.' + PS.options.tags[tag]);
+		tag? PS.stacks.selected = 0: PS.stacks.selected = 1;
+		for (var i = 0; i < elements.length; i++) {
+			classie.addClass( elements[i], 'hide' );
 		}
-		this._resizeTimeout = setTimeout( delayed, 100 );
+		var galleryHead = document.createElement('h1');
+		galleryHead.innerHTML = 'Gallery 1';
+		var galleryButton = document.createElement('button');
+		galleryButton.innerHTML = 'Back';
+		PS._addHeader([galleryHead, galleryButton]);
+		PS._toGrid();
 	}
-
-	Photostack.prototype._resize = function() {
-		var self = this, callback = function() { self._shuffle( true ); }
-		this._getSizes();
-		if( this.started && this.flipped ) {
-			this._rotateItem( callback );
+	Photostack.prototype._addHeader = function(elements) {
+		var PS = this,
+		header = document.getElementById('galleryDiv');
+		if(!header){
+			var galleryDiv = document.createElement('div');
+			galleryDiv.id = 'galleryDiv';
+			PS.el.insertBefore(galleryDiv, PS.el.firstChild)
+			header = document.getElementById('galleryDiv');
+		}else{
+			header.innerHTML ='';
 		}
-		else {
-			callback();
+		if (elements.length) {
+			for (var i = 0; i < elements.length; i++) {
+				header.appendChild(elements[i]);
+			}
+		}else{
+			header.appendChild(elements)
 		}
 	}
 
@@ -316,12 +331,11 @@
 					}
 				} );
 			};
-
 		moveItems.call();
 	}
 
 	// display items in grid
-	Photostack.prototype._grid = function( resize ) {
+	Photostack.prototype._toGrid = function( resize ) {
 		var iter = resize ? 1 : this.currentItem.getAttribute( 'data-shuffle-iteration' ) || 1;
 		var
 			// lines & columns
@@ -331,9 +345,10 @@
 			columns = Math.ceil(this.sizes.inner.height / (this.sizes.item.height) );
 			// since we are rounding up the previous calcs we need to know how much more we are adding to the calcs for both x and y axis
 
-		this._createGrid(iter, columns, lines, false, 1);
+		this._createGrid(iter, columns, lines, false, 1.05);
 	}
 	Photostack.prototype._createGrid = function(iter, columns, lines, shuffle, overlapFactor) {
+		var PS = this;
 		--iter;
 		// create a "grid" of possible positions
 		var grid = [];
@@ -343,11 +358,11 @@
 			var col = grid[ i ] = [];
 			for( var j = 0; j < lines; ++j ) {
 				// xVal = [1-11] * (width * .5) - extraX
-				var xVal = j * (this.sizes.item.width * overlapFactor),
-					yVal = i * (this.sizes.item.height * overlapFactor),
+				var xVal = j * (PS.sizes.item.width * overlapFactor),
+					yVal = i * (PS.sizes.item.height * overlapFactor),
 					olx = 0, oly = 0;
-					if( self.started && iter === 0 && shuffle) {
-						var ol = self._isOverlapping( { x : xVal, y : yVal } );
+					if( PS.started && iter === 0 && shuffle) {
+						var ol = PS._isOverlapping( { x : xVal, y : yVal } );
 						if( ol.overlapping ) {
 							olx = ol.noOverlap.x;
 							oly = ol.noOverlap.y;
@@ -429,40 +444,9 @@
 			}
 		} );
 	}
-	Photostack.prototype._addHeader = function() {
-		// add nav dots
-		console.log();
-		var backButton = document.createElement('button'),
-		galleryHead = document.createElement('h1');
-		galleryHead.innerHTML = 'Gallery ' + (this.stacks? this.stacks.selected + 1: '')
-		backButton.innerHTML = 'Back';
-		var self=this;
-		backButton.onclick = function(){
-			console.log('button', this);
-			// self._init();
-			// self._shuffle();
-			// self._initEvents();
-		};
-// Prepend it
-		console.log(this);
-		// this.el.insertBefore(backButton, this.el.firstChild);
-		// this.el.insertBefore(galleryHead, this.el.firstChild);
-	}
 
-	var clickOverlay = function(e){
-		e.target.removeEventListener('click', clickOverlay);
-		e.x > (screen.width/2) ? window.Photostack.prototype._openStack(0) : window.Photostack.prototype._openStack(1);
-	}
-	Photostack.prototype._openStack = function(tag){
-		console.log("open");
-		this._addHeader();
-		// var elements = document.querySelectorAll('.' + this.options.tags[tag]);
-		// tag? this.stacks.selected = 0: this.stacks.selected = 1;
-		// for (var i = 0; i < elements.length; i++) {
-		// 	classie.addClass( elements[i], 'hide' );
-		// }
-		// this._grid();
-	}
+
+
 	Photostack.prototype._getSizes = function() {
 		this.sizes = {
 			inner : { width : this.inner.offsetWidth, height : (this.inner.offsetHeight > 0? this.inner.offsetHeight : window.innerHeight) },
@@ -555,7 +539,28 @@
 			}
 		}
 	}
+	Photostack.prototype._resizeHandler = function() {
+		var self = this;
+		function delayed() {
+			self._resize();
+			self._resizeTimeout = null;
+		}
+		if ( this._resizeTimeout ) {
+			clearTimeout( this._resizeTimeout );
+		}
+		this._resizeTimeout = setTimeout( delayed, 100 );
+	}
 
+	Photostack.prototype._resize = function() {
+		var self = this, callback = function() { self._shuffle( true ); }
+		this._getSizes();
+		if( this.started && this.flipped ) {
+			this._rotateItem( callback );
+		}
+		else {
+			callback();
+		}
+	}
 	// add to global namespace
 	window.Photostack = Photostack;
 

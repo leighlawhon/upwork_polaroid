@@ -18,13 +18,16 @@ export default StyleSheet.create({
     "photostack-start": {
         "cursor": "pointer"
     },
-    "photostack > div": {
+    "photos": {
         "width": "100%",
         "height": "100%",
-        "marginTop": 0,
+        "marginTop": 50,
         "marginRight": "auto",
-        "marginBottom": 0,
+        "marginBottom": 50,
         "marginLeft": "auto"
+    },
+    "galleryDiv": {
+        "marginTop": 0
     },
     "photostack figure": {
         "width": 240,
