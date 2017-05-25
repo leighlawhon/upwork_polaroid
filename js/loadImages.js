@@ -7,8 +7,9 @@ var imageJson = (function(){
       if(xhr.status !== 200){
         console.error('Error: ', xhr.status);
       }
+      // console.log(xhr.responseText);
       var json = JSON.parse(xhr.responseText);
-      addFigures.apply(json, [container, callback])
+      addFigures.apply(json.images, [container, callback])
     }
   }
   var addFigures = function(container, callback){
