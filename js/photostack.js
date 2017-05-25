@@ -115,40 +115,6 @@
 		this._initEvents();
 	}
 
-	Photostack.prototype._addHeader = function() {
-		// add nav dots
-		console.log();
-		var backButton = document.createElement('button'),
-		galleryHead = document.createElement('h1');
-		galleryHead.innerHTML = 'Gallery ' + (this.stacks? this.stacks.selected + 1: '')
-		backButton.innerHTML = 'Back';
-		var self=this;
-		backButton.onclick = function(){
-			console.log('button', this);
-			// self._init();
-			// self._shuffle();
-			// self._initEvents();
-		};
-// Prepend it
-		console.log(this);
-		// this.el.insertBefore(backButton, this.el.firstChild);
-		// this.el.insertBefore(galleryHead, this.el.firstChild);
-	}
-
-	var clickOverlay = function(e){
-		e.target.removeEventListener('click', clickOverlay);
-		e.x > (screen.width/2) ? window.Photostack.prototype._openStack(0) : window.Photostack.prototype._openStack(1);
-	}
-	Photostack.prototype._openStack = function(tag){
-		console.log("open");
-		this._addHeader();
-		// var elements = document.querySelectorAll('.' + this.options.tags[tag]);
-		// tag? this.stacks.selected = 0: this.stacks.selected = 1;
-		// for (var i = 0; i < elements.length; i++) {
-		// 	classie.addClass( elements[i], 'hide' );
-		// }
-		// this._grid();
-	}
 	Photostack.prototype._initEvents = function() {
 		this.el.addEventListener('click', clickOverlay)
 		var self = this,
@@ -281,18 +247,7 @@
 							olx = 0, oly = 0;
 						// if everything is at the begining, it's ok to overlap the center
 						// console.log(self.started, iter, 'iter');
-						if( self.started && iter === 0 ) {
-							var ol = self._isOverlapping( { x : xVal, y : yVal } );
-							if( ol.overlapping ) {
-								olx = ol.noOverlap.x;
-								oly = ol.noOverlap.y;
-								var r = Math.floor( Math.random() * 3 );
-								switch(r) {
-									case 0 : olx = 0; break;
-									case 1 : oly = 0; break;
-								}
-							}
-						}
+
 						col[ j ] = { x : xVal + olx, y : yVal + oly };
 					}
 				}
@@ -376,9 +331,9 @@
 			columns = Math.ceil(this.sizes.inner.height / (this.sizes.item.height) );
 			// since we are rounding up the previous calcs we need to know how much more we are adding to the calcs for both x and y axis
 
-		this._createGrid(iter, columns, lines);
+		this._createGrid(iter, columns, lines, false, 1);
 	}
-	Photostack.prototype._createGrid = function(iter, columns, lines) {
+	Photostack.prototype._createGrid = function(iter, columns, lines, shuffle, overlapFactor) {
 		--iter;
 		// create a "grid" of possible positions
 		var grid = [];
@@ -388,9 +343,21 @@
 			var col = grid[ i ] = [];
 			for( var j = 0; j < lines; ++j ) {
 				// xVal = [1-11] * (width * .5) - extraX
-				var xVal = j * this.sizes.item.width,
-					yVal = i * this.sizes.item.height,
+				var xVal = j * (this.sizes.item.width * overlapFactor),
+					yVal = i * (this.sizes.item.height * overlapFactor),
 					olx = 0, oly = 0;
+					if( self.started && iter === 0 && shuffle) {
+						var ol = self._isOverlapping( { x : xVal, y : yVal } );
+						if( ol.overlapping ) {
+							olx = ol.noOverlap.x;
+							oly = ol.noOverlap.y;
+							var r = Math.floor( Math.random() * 3 );
+							switch(r) {
+								case 0 : olx = 0; break;
+								case 1 : oly = 0; break;
+							}
+						}
+					}
 				col[ j ] = { x : xVal, y : yVal };
 			}
 		}
@@ -403,10 +370,10 @@
 			}
 		}
 
-		this._placeItemsOnGrid(getItems(), grid, columns, lines, false);
+		this._placeItemsOnGrid(getItems(), grid, columns, lines, shuffle);
 	};
 	Photostack.prototype._placeItemsOnGrid = function (items, grid, columns, lines, shuffle){
-
+		if(shuffle){grid = shuffleMArray(grid);}
 		var l = 0, c = 0, cntItemsAnim = 0;
 		var self = this;
 		items.forEach( function( item, i ) {
@@ -418,7 +385,6 @@
 			else {
 				++l
 			}
-
 			var gridVal = grid[c][l-1],
 				translation = { x : gridVal.x, y : gridVal.y },
 				onEndTransitionFn = function() {
@@ -426,14 +392,33 @@
 					if( support.transitions ) {
 						this.removeEventListener( transEndEventName, onEndTransitionFn );
 					}
+					if( cntItemsAnim === self.allItemsCount && shuffle ) {
+						if( iter > 0 ) {
+							moveItems.call();
+						}
+						else {
+							// change transform-origin
+							classie.addClass( self.currentItem, 'photostack-flip' );
+							// all done..
+							self.isShuffling = false;
+							if( typeof self.options.callback === 'function' ) {
+								self.options.callback( self.currentItem );
+							}
+						}
+					}
+				},
+				translateItems = function(shuffle){
+					if (shuffle){
+						var transformation = 'translate(' + translation.x + 'px,' + translation.y + 'px) rotate(' + Math.floor( Math.random() * (maxrot - minrot + 1) + minrot ) + 'deg)';
+					}else{
+						var transformation = 'translate(' + translation.x + 'px,' + translation.y + 'px) ';
+					}
+					item.style.WebkitTransform = transformation;
+					item.style.msTransform = transformation;
+					item.style.transform = transformation;
+					classie.addClass(self.el, 'photostack-grid')
 				};
-
-				var transformation = 'translate(' + translation.x + 'px,' + translation.y + 'px) ';
-				item.style.WebkitTransform = transformation;
-				item.style.msTransform = transformation;
-				item.style.transform = transformation;
-				classie.addClass(self.el, 'photostack-grid')
-
+			translateItems();
 			if( self.started ) {
 				if( support.transitions ) {
 					item.addEventListener( transEndEventName, onEndTransitionFn );
@@ -443,6 +428,40 @@
 				}
 			}
 		} );
+	}
+	Photostack.prototype._addHeader = function() {
+		// add nav dots
+		console.log();
+		var backButton = document.createElement('button'),
+		galleryHead = document.createElement('h1');
+		galleryHead.innerHTML = 'Gallery ' + (this.stacks? this.stacks.selected + 1: '')
+		backButton.innerHTML = 'Back';
+		var self=this;
+		backButton.onclick = function(){
+			console.log('button', this);
+			// self._init();
+			// self._shuffle();
+			// self._initEvents();
+		};
+// Prepend it
+		console.log(this);
+		// this.el.insertBefore(backButton, this.el.firstChild);
+		// this.el.insertBefore(galleryHead, this.el.firstChild);
+	}
+
+	var clickOverlay = function(e){
+		e.target.removeEventListener('click', clickOverlay);
+		e.x > (screen.width/2) ? window.Photostack.prototype._openStack(0) : window.Photostack.prototype._openStack(1);
+	}
+	Photostack.prototype._openStack = function(tag){
+		console.log("open");
+		this._addHeader();
+		// var elements = document.querySelectorAll('.' + this.options.tags[tag]);
+		// tag? this.stacks.selected = 0: this.stacks.selected = 1;
+		// for (var i = 0; i < elements.length; i++) {
+		// 	classie.addClass( elements[i], 'hide' );
+		// }
+		// this._grid();
 	}
 	Photostack.prototype._getSizes = function() {
 		this.sizes = {
