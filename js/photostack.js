@@ -119,15 +119,14 @@
 		var PS = this,
 			beforeStep = classie.hasClass( PS.el, 'photostack-start' );
 		if( beforeStep ) {
-			PS._shuffle();
+			PS._openToShuffle();
 			var container = PS.el
 			var screen =  PS.sizes.inner;
 			var tags = PS.options.tags
-			setTimeout(function(){ PS._addOverlay(beforeStep) }, 500);
+			setTimeout(function(){ PS._addOverlay() }, 500);
 		}
 		else {
-			// this will throw and error...need to see when this is called
-			openToPiles();
+			PS._addOverlay();
 		}
 		window.addEventListener( 'resize', function() {
 			if(!classie.hasClass(PS.el, 'photostack-grid')){
@@ -135,10 +134,11 @@
 			}
 		});
 	}
-	Photostack.prototype._addOverlay = function(beforeStep){
+	Photostack.prototype._addOverlay = function(){
 		var
 		PS = this,
-		openToPiles = function() {
+		beforeStep = classie.hasClass( PS.el, 'photostack-start' ),
+		addOverlayClasses = function() {
 			var setTransition = function() {
 				if( support.transitions ) {
 					classie.addClass( PS.el, 'photostack-transition' );
@@ -161,9 +161,9 @@
 		}
 		PS.el.addEventListener('click', clickOverlay);
 		var galleryHead = document.createElement('h1');
-		galleryHead.innerHTML = 'Polaroid Gallery '
+		galleryHead.innerHTML = 'Polaroid Gallery ';
 		PS._addHeader(galleryHead);
-		openToPiles();
+		addOverlayClasses();
 	};
 	Photostack.prototype._openStack = function(tag){
 		var PS = this
@@ -176,8 +176,11 @@
 		galleryHead.innerHTML = 'Gallery 1';
 		var galleryButton = document.createElement('button');
 		galleryButton.innerHTML = 'Back';
+		galleryButton.onclick = function(){
+			// PS._openToStacks();
+		}
 		PS._addHeader([galleryHead, galleryButton]);
-		PS._toGrid();
+		PS._openToGrid();
 	}
 	Photostack.prototype._addHeader = function(elements) {
 		var PS = this,
@@ -200,6 +203,7 @@
 	}
 
 	Photostack.prototype._showPhoto = function( pos ) {
+		console.log(pos);
 		if( this.isShuffling ) {
 			return false;
 		}
@@ -209,19 +213,19 @@
 		if( classie.hasClass( this.currentItem, 'photostack-flip' ) ) {
 			this._removeItemPerspective();
 		}
-
+		//
 		classie.removeClass( this.currentItem, 'photostack-current' );
-
-		// change current
+		//
+		// // change current
 		this.current = pos;
 		this.currentItem = this.items[ this.current ];
-
-		// shuffle a bit
-		this._shuffle();
+		//
+		// // shuffle a bit
+		this._openToShuffle();
 	}
 
 	// display items (randomly)
-	Photostack.prototype._shuffle = function( resize ) {
+	Photostack.prototype._openToShuffle = function( resize ) {
 		var iter = resize ? 1 : this.currentItem.getAttribute( 'data-shuffle-iteration' ) || 1;
 		if( iter <= 0 || !this.started || this.openDefault ) { iter = 1; }
 		// first item is open by default
@@ -231,21 +235,22 @@
 			this.openDefault = false;
 			this.isShuffling = false;
 		}
-		var overlapFactor = .5,
+		var
+			PS = this,
+			overlapFactor = .5,
 			// lines & columns
 			// the window width / an item widtha nd the over lap which is .5 lines = a % of the screen
-			lines = Math.ceil(this.sizes.inner.width / (this.sizes.item.width * overlapFactor) ),
+			lines = Math.ceil(PS.sizes.inner.width / (PS.sizes.item.width * overlapFactor) ),
 			// collumns = screen height/ height of the item * 0.5 = total items on screen
-			columns = Math.ceil(this.sizes.inner.height / (this.sizes.item.height * overlapFactor) ),
+			columns = Math.ceil(PS.sizes.inner.height / (PS.sizes.item.height * overlapFactor) ),
 			// since we are rounding up the previous calcs we need to know how much more we are adding to the calcs for both x and y axis
-			addX = lines * this.sizes.item.width * overlapFactor + this.sizes.item.width/2 - this.sizes.inner.width,
-			addY = columns * this.sizes.item.height * overlapFactor + this.sizes.item.height/2 - this.sizes.inner.height,
+			addX = lines * PS.sizes.item.width * overlapFactor + PS.sizes.item.width/2 - PS.sizes.inner.width,
+			addY = columns * PS.sizes.item.height * overlapFactor + PS.sizes.item.height/2 - PS.sizes.inner.height,
 			// we will want to center the grid
 			extraX = addX / 2,
 			extraY = addY / 2,
 			// max and min rotation angles
 			maxrot = 35, minrot = -35,
-			self = this,
 			// translate/rotate items
 			moveItems = function() {
 				--iter;
@@ -257,11 +262,11 @@
 					var col = grid[ i ] = [];
 					for( var j = 0; j < lines; ++j ) {
 						// xVal = [1-11] * (width * .5) - extraX
-						var xVal = j * (self.sizes.item.width * overlapFactor) - extraX,
-							yVal = i * (self.sizes.item.height * overlapFactor) - extraY,
+						var xVal = j * (PS.sizes.item.width * overlapFactor) - extraX,
+							yVal = i * (PS.sizes.item.height * overlapFactor) - extraY,
 							olx = 0, oly = 0;
 						// if everything is at the begining, it's ok to overlap the center
-						// console.log(self.started, iter, 'iter');
+						// console.log(PS.started, iter, 'iter');
 
 						col[ j ] = { x : xVal + olx, y : yVal + oly };
 					}
@@ -269,7 +274,7 @@
 				// shuffle
 				grid = shuffleMArray(grid);
 				var l = 0, c = 0, cntItemsAnim = 0;
-				self.allItems.forEach( function( item, i ) {
+				PS.allItems.forEach( function( item, i ) {
 					// console.log(item);
 					// pick a random item from the grid
 					if( l === lines - 1 ) {
@@ -287,33 +292,23 @@
 							if( support.transitions ) {
 								this.removeEventListener( transEndEventName, onEndTransitionFn );
 							}
-							if( cntItemsAnim === self.allItemsCount ) {
+							if( cntItemsAnim === PS.allItemsCount ) {
 								if( iter > 0 ) {
 									moveItems.call();
 								}
 								else {
 									// change transform-origin
-									classie.addClass( self.currentItem, 'photostack-flip' );
+									classie.addClass( PS.currentItem, 'photostack-flip' );
 									// all done..
-									self.isShuffling = false;
-									if( typeof self.options.callback === 'function' ) {
-										self.options.callback( self.currentItem );
+									PS.isShuffling = false;
+									if( typeof PS.options.callback === 'function' ) {
+										PS.options.callback( PS.currentItem );
 									}
 								}
 							}
 						};
-						if (self.options.tags &&  self.started) {
-							// console.log(  );
-							if(item.dataset.tag === self.options.tags[0]){
-								var transformation = 'translate(' + (self.sizes.inner.width/8) + 'px,' + (self.sizes.inner.height/4) + 'px) rotate(' + Math.floor( Math.random() * (maxrot - minrot + 1) + minrot ) + 'deg)';
-							}else{
-								var transformation = 'translate(' + (self.sizes.inner.width/8 *5) + 'px,' + (self.sizes.inner.height/4) + 'px) rotate(' + Math.floor( Math.random() * (maxrot - minrot + 1) + minrot ) + 'deg)';
-							}
-
-							item.style.WebkitTransform = transformation;
-							item.style.msTransform = transformation;
-							item.style.transform = transformation;
-							classie.removeClass(item, 'hide')
+						if (PS.options.tags &&  PS.started) {
+							PS._openToStacks(item, maxrot, minrot);
 						}else{
 							var transformation = 'translate(' + translation.x + 'px,' + translation.y + 'px) rotate(' + Math.floor( Math.random() * (maxrot - minrot + 1) + minrot ) + 'deg)';
 							item.style.WebkitTransform = transformation;
@@ -321,7 +316,7 @@
 							item.style.transform = transformation;
 						}
 
-					if( self.started ) {
+					if( PS.started ) {
 						if( support.transitions ) {
 							item.addEventListener( transEndEventName, onEndTransitionFn );
 						}
@@ -335,20 +330,31 @@
 	}
 
 	// display items in grid
-	Photostack.prototype._toGrid = function( resize ) {
-		var iter = resize ? 1 : this.currentItem.getAttribute( 'data-shuffle-iteration' ) || 1;
-		var
-			// lines & columns
-			// the window width / an item widtha nd the over lap which is .5 lines = a % of the screen
-			lines = Math.ceil(this.sizes.inner.width / (this.sizes.item.width) ),
-			// collumns = screen height/ height of the item * 0.5 = total items on screen
-			columns = Math.ceil(this.sizes.inner.height / (this.sizes.item.height) );
-			// since we are rounding up the previous calcs we need to know how much more we are adding to the calcs for both x and y axis
-
-		this._createGrid(iter, columns, lines, false, 1.05);
+	Photostack.prototype._openToGrid = function( resize ) {
+		this._createGrid(resize, false, 1.05);
 	}
-	Photostack.prototype._createGrid = function(iter, columns, lines, shuffle, overlapFactor) {
-		var PS = this;
+	Photostack.prototype._openToStacks = function(item, maxrot, minrot){
+		var PS = this,
+		galleryHead = document.createElement('h1');
+		galleryHead.innerHTML = 'Back Gallery'
+		PS._addHeader(galleryHead);
+		PS._addOverlay()
+		if(item.dataset.tag === PS.options.tags[0]){
+			var transformation = 'translate(' + (PS.sizes.inner.width/8) + 'px,' + (PS.sizes.inner.height/4) + 'px) rotate(' + Math.floor( Math.random() * (maxrot - minrot + 1) + minrot ) + 'deg)';
+		}else{
+			var transformation = 'translate(' + (PS.sizes.inner.width/8 *5) + 'px,' + (PS.sizes.inner.height/4) + 'px) rotate(' + Math.floor( Math.random() * (maxrot - minrot + 1) + minrot ) + 'deg)';
+		}
+
+		item.style.WebkitTransform = transformation;
+		item.style.msTransform = transformation;
+		item.style.transform = transformation;
+		classie.removeClass(item, 'hide')
+	}
+	Photostack.prototype._createGrid = function(resize, shuffle, overlapFactor) {
+		var PS = this,
+		iter = resize ? 1 : this.currentItem.getAttribute( 'data-shuffle-iteration' ) || 1,
+		lines = Math.ceil(this.sizes.inner.width / (this.sizes.item.width) ),
+		columns = Math.ceil(this.sizes.inner.height / (this.sizes.item.height) );
 		--iter;
 		// create a "grid" of possible positions
 		var grid = [];
@@ -552,7 +558,7 @@
 	}
 
 	Photostack.prototype._resize = function() {
-		var self = this, callback = function() { self._shuffle( true ); }
+		var self = this, callback = function() { self._openToShuffle( true ); }
 		this._getSizes();
 		if( this.started && this.flipped ) {
 			this._rotateItem( callback );
