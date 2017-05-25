@@ -115,18 +115,42 @@
 		this._initEvents();
 	}
 
-	Photostack.prototype._addNavigation = function() {
+	Photostack.prototype._addHeader = function() {
 		// add nav dots
-		this.nav = document.createElement( 'nav' )
-		var inner = '';
-		for( var i = 0; i < this.itemsCount; ++i ) {
-			inner += '<span></span>';
-		}
-		this.nav.innerHTML = inner;
-		this.el.appendChild( this.nav );
+		console.log();
+		var backButton = document.createElement('button'),
+		galleryHead = document.createElement('h1');
+		galleryHead.innerHTML = 'Gallery ' + (this.stacks? this.stacks.selected + 1: '')
+		backButton.innerHTML = 'Back';
+		var self=this;
+		backButton.onclick = function(){
+			console.log('button', this);
+			// self._init();
+			// self._shuffle();
+			// self._initEvents();
+		};
+// Prepend it
+		console.log(this);
+		// this.el.insertBefore(backButton, this.el.firstChild);
+		// this.el.insertBefore(galleryHead, this.el.firstChild);
 	}
 
+	var clickOverlay = function(e){
+		e.target.removeEventListener('click', clickOverlay);
+		e.x > (screen.width/2) ? window.Photostack.prototype._openStack(0) : window.Photostack.prototype._openStack(1);
+	}
+	Photostack.prototype._openStack = function(tag){
+		console.log("open");
+		this._addHeader();
+		// var elements = document.querySelectorAll('.' + this.options.tags[tag]);
+		// tag? this.stacks.selected = 0: this.stacks.selected = 1;
+		// for (var i = 0; i < elements.length; i++) {
+		// 	classie.addClass( elements[i], 'hide' );
+		// }
+		// this._grid();
+	}
 	Photostack.prototype._initEvents = function() {
+		this.el.addEventListener('click', clickOverlay)
 		var self = this,
 			beforeStep = classie.hasClass( this.el, 'photostack-start' ),
 			openRandom = function() {
@@ -153,23 +177,12 @@
 			var screen =  this.sizes.inner;
 			var tags = this.options.tags
 			setTimeout(function(){ addOverlay(container, screen, tags) }, 500);
-			var setStack = function(e){
-				e.x > (screen.width/2) ? openStack(0) : openStack(1);
-			}
 			function addOverlay(container, screen, tags) {
 				openRandom();
-				container.addEventListener('click', setStack)
+				console.log(self);
 			}
 			//
-			function openStack(tag){
-				container.removeEventListener('click', setStack);
-				var elements = document.querySelectorAll('.' + self.options.tags[tag]);
-				tag? self.stacks.selected = 0: self.stacks.selected = 1;
-				for (var i = 0; i < elements.length; i++) {
-					classie.addClass( elements[i], 'hide' );
-				}
-				self._grid();
-			}
+
 		}
 		else {
 			console.log('after');
@@ -287,7 +300,7 @@
 				grid = shuffleMArray(grid);
 				var l = 0, c = 0, cntItemsAnim = 0;
 				self.allItems.forEach( function( item, i ) {
-					console.log(item);
+					// console.log(item);
 					// pick a random item from the grid
 					if( l === lines - 1 ) {
 						c = c === columns - 1 ? 0 : c + 1;
@@ -355,18 +368,6 @@
 	// display items in grid
 	Photostack.prototype._grid = function( resize ) {
 		var iter = resize ? 1 : this.currentItem.getAttribute( 'data-shuffle-iteration' ) || 1;
-		console.log(this);
-		var backButton = document.createElement('button'),
-		galleryHead = document.createElement('h1');
-		galleryHead.innerHTML = 'Gallery ' + (this.stacks.selected + 1)
-		backButton.innerHTML = 'Back';
-		self=this,
-		backButton.onclick = function(){
-			self._shuffle();
-		};
-// Prepend it
-		this.el.insertBefore(backButton, this.el.firstChild);
-		this.el.insertBefore(galleryHead, this.el.firstChild);
 		var
 			// lines & columns
 			// the window width / an item widtha nd the over lap which is .5 lines = a % of the screen
