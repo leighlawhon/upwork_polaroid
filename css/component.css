@@ -11,13 +11,11 @@
 
 .photostack {
 	background: #ddd;
-	position: relative;
+	position: absolute;
 	text-align: center;
 	overflow: hidden;
-}
-
-.js .photostack {
-	min-height: 580px;
+	height: 100%;
+	width: 100%;
 }
 
 .photostack-start {
@@ -30,7 +28,6 @@
 #photos {
 	width: 100%;
 	height: 100%;
-	margin: 50px auto;
 }
 #galleryDiv{
 	margin-top: 0px;

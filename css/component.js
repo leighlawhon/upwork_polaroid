@@ -8,23 +8,18 @@ const {width, height, scale} = Dimensions.get("window"),
 export default StyleSheet.create({
     "photostack": {
         "background": "#ddd",
-        "position": "relative",
+        "position": "absolute",
         "textAlign": "center",
-        "overflow": "hidden"
-    },
-    "js photostack": {
-        "minHeight": 580
+        "overflow": "hidden",
+        "height": "100%",
+        "width": "100%"
     },
     "photostack-start": {
         "cursor": "pointer"
     },
     "photos": {
         "width": "100%",
-        "height": "100%",
-        "marginTop": 50,
-        "marginRight": "auto",
-        "marginBottom": 50,
-        "marginLeft": "auto"
+        "height": "100%"
     },
     "galleryDiv": {
         "marginTop": 0
