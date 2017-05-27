@@ -96,6 +96,7 @@
 		if( !this.allItemsCount ) return;
 		this.items = [].slice.call( this.inner.querySelectorAll( 'figure:not([data-dummy])' ) );
 		this.itemsCount = this.items.length;
+		this.galleryHeadDivs = document.getElementById('galleryHead').querySelectorAll('h1');
 		// index of the current photo
 		this.current = 0;
 		this.openToDefault = true;
@@ -256,59 +257,15 @@
 	Photostack.prototype._openToStacks = function( ) {
 		console.log("open to stacks");
 		var PS = this,
-		galleryHeadDivs = document.getElementById('galleryHead').querySelectorAll('h1'),
-		backButton = document.createElement('button'),
-		clickableElem = document.querySelectorAll('figure:not(.hide)'),
-		openStack = function(e){
-			if(e.x < (PS.sizes.inner.width/2)){
-				var tag = 0;
-			}else{
-				var tag = 1;
-			};
-			var ele = 'figure:not(.' + PS.options.tags[tag] + ')',
-			elements = document.querySelectorAll(ele);
-			PS.stackSelected = tag;
-			// hide headers
-			for (var i = 0; i < galleryHeadDivs.length; i++) {
-				classie.addClass(galleryHeadDivs[i], 'hide')
-			};
-			// hide unselected tags
-			for (var i = 0; i < elements.length; i++) {
-				// console.log(elements[i]);
-				classie.addClass( elements[i], 'hide' );
-			}
-			// show stack head
-			classie.removeClass(galleryHeadDivs[tag + 1], 'hide');
-			// add back button
-			backButton.onclick = closeStack;
-			backButton.innerHTML = "<";
-			galleryHeadDivs[tag + 1].insertBefore(backButton, galleryHeadDivs[tag + 1].firstChild);
-
-			PS.el.removeEventListener('click', openStack);
-			PS.grid = true;
-			PS.stack = false;
-			PS._shuffle();
-			if(PS.grid){
-				for (var i = 0; i < clickableElem.length; i++) {
-					classie.addClass(clickableElem[i], 'clickable')
-				}
-			}
-		},
-		closeStack = function(){
-			PS.grid = false;
-			PS.stack = true;
-			// show unselected tags
-			var elements =  PS.inner.children;
-			// console.log(PS.inner.children);
-			for (var i = 0; i < elements.length; i++) {
-				classie.removeClass( elements[i], 'hide' );
-				classie.removeClass( elements[i], 'clickable' );
-			}
-			PS._shuffle();
-		};
+		backButton = document.createElement('button');
+		// add back button
+		backButton.onclick = PS._closeStack.bind(PS);
+		backButton.innerHTML = "<";
+		PS.galleryHeadDivs[PS.stackSelected + 1].insertBefore(backButton, PS.galleryHeadDivs[PS.stackSelected + 1].firstChild);
 		// if left click go to stack one, if right, go to stack 2
-		PS.el.addEventListener('click', openStack);
-		classie.removeClass(document.getElementById('galleryHead-0'), 'hide')
+		PS.el.addEventListener('click', PS._openStack.bind(PS));
+		classie.removeClass(document.getElementById('galleryHead-0'), 'hide');
+
 		if( PS.isShuffling ) {
 			return false;
 		}
@@ -316,7 +273,54 @@
 		// shuffle a bit
 		PS._shuffle();
 	}
+	Photostack.prototype._openStack = function(e){
+		var PS = this,
+		clickableElem = document.querySelectorAll('figure:not(.hide)');
 
+		if(e.x < (PS.sizes.inner.width/2)){
+			var tag = 0;
+		}else{
+			var tag = 1;
+		};
+		var ele = 'figure:not(.' + PS.options.tags[tag] + ')',
+		elements = document.querySelectorAll(ele);
+		PS.stackSelected = tag;
+		// hide headers
+		for (var i = 0; i < PS.galleryHeadDivs.length; i++) {
+			classie.addClass(PS.galleryHeadDivs[i], 'hide')
+		};
+		// hide unselected tags
+		for (var i = 0; i < elements.length; i++) {
+			// console.log(elements[i]);
+			classie.addClass( elements[i], 'hide' );
+		}
+		// show stack head
+		classie.removeClass(PS.galleryHeadDivs[tag + 1], 'hide');
+
+		PS.el.removeEventListener('click', PS._openStack);
+		PS.grid = true;
+		PS.stack = false;
+		PS._shuffle();
+		if(PS.grid){
+			for (var i = 0; i < clickableElem.length; i++) {
+				classie.addClass(clickableElem[i], 'clickable')
+			}
+		}
+	};
+	Photostack.prototype._closeStack = function(){
+		var PS = this;
+		PS.grid = false;
+		PS.stack = true;
+		// show unselected tags
+		var clickableElem = PS.el.querySelectorAll('figure.hide');
+
+		for (var i = 0; i < clickableElem.length; i++) {
+			// classie.removeClass( elements[i], 'hide' );
+			classie.removeClass( clickableElem[i], 'hide' );
+			console.log(clickableElem[i]);
+		}
+		PS._shuffle();
+	},
 	// display items (randomly)
 	Photostack.prototype._shuffle = function( resize ) {
 		var PS = this;
@@ -348,7 +352,7 @@
 				if(PS.stacks && PS.grid ){
 					var tag = '.' + PS.options.tags[PS.stackSelected];
 					var items = document.querySelectorAll(tag);
-					console.log(items, tag);
+					// console.log(items, tag);
 				}else{
 					var items = PS.allItems;
 				}
@@ -404,7 +408,7 @@
 							if (!PS.grid) {
 								// moveit to stacks
 								console.log("moving to stacks");
-								PS.el.addEventListener('click', PS._openStack);
+								PS.el.addEventListener('click', PS._openStack.bind(PS));
 								if(item.dataset.tag === PS.options.tags[0]){
 									var transformation = 'translate(' + posX1 + 'px,' +  posY + 'px)' + rotate;
 								}else{
