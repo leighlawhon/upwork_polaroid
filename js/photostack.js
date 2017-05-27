@@ -107,31 +107,21 @@
 			min: -35
 		}
 		extend( this.options, options );
-		if(this.options.tags){
-			// setup stacks
-			var set = {0:[],1:[], selected:0};
-			for (var i = 0; i < this.allItems.length; i++) {
-				this.allItems[i].dataset.tag === this.options.tags[0] ? set[0].push(this.allItems[i]) : set[1].push(this.allItems[i])
-			}
-			this.stacks = set
-		}
+		this.stacks = this.options.tags ? true : false;
+		this.stackSelected = 0;
 		this._init();
 	}
 
 	Photostack.prototype.options = {};
 
 	Photostack.prototype._init = function() {
-		// console.log(this.stacks);
-		if(this.stacks){
-			this.currentItem = this.items[ this.current ];
-			this._getSizes();
-			this._initEvents();
-		}else{
-			this.currentItem = this.items[ this.current ];
-			this._addNavigation();
-			this._getSizes();
-			this._initEvents();
+		var PS = this;
+		PS.currentItem = this.items[ this.current ];
+		PS._getSizes();
+		if(!PS.stacks){
+			PS._addNavigation();
 		}
+		PS._initEvents();
 	}
 
 	Photostack.prototype._addNavigation = function() {
@@ -144,6 +134,7 @@
 		this.nav.innerHTML = inner;
 		this.el.appendChild( this.nav );
 		this.navDots = [].slice.call( this.nav.children );
+		console.log(this.navDots);
 	}
 
 	Photostack.prototype._initEvents = function() {
@@ -185,7 +176,8 @@
 			PS.openToDefault = true;
 			setTimeout( setTransition, 25 );
 		}
-		if(!this.stacks){
+		if(!PS.stacks){
+			console.log(this);
 			this.navDots.forEach( function( dot, idx ) {
 				dot.addEventListener( 'click', function() {
 					// rotate the photo if clicking on the current dot
@@ -262,36 +254,57 @@
 		PS._shuffle();
 	}
 	Photostack.prototype._openToStacks = function( ) {
+		console.log("open to stacks");
 		var PS = this,
+		galleryHeadDivs = document.getElementById('galleryHead').querySelectorAll('h1'),
+		backButton = document.createElement('button'),
+		clickableElem = document.querySelectorAll('figure:not(.hide)'),
 		openStack = function(e){
 			if(e.x < (PS.sizes.inner.width/2)){
 				var tag = 0;
 			}else{
 				var tag = 1;
 			};
-			PS.stacks.selected = tag;
-			var ele = 'figure:not(.' + PS.options.tags[tag] + ')';
-			var elements = document.querySelectorAll(ele);
-			console.log(elements);
-			for (var i = 0; i < elements.length; i++) {
-				console.log(elements[i]);
-				classie.addClass( elements[i], 'hide' );
-			}
-			var galleryHeadDivs = document.getElementById('galleryHead').querySelectorAll('h1');
+			var ele = 'figure:not(.' + PS.options.tags[tag] + ')',
+			elements = document.querySelectorAll(ele);
+			PS.stackSelected = tag;
+			// hide headers
 			for (var i = 0; i < galleryHeadDivs.length; i++) {
 				classie.addClass(galleryHeadDivs[i], 'hide')
 			};
-
+			// hide unselected tags
+			for (var i = 0; i < elements.length; i++) {
+				// console.log(elements[i]);
+				classie.addClass( elements[i], 'hide' );
+			}
+			// show stack head
 			classie.removeClass(galleryHeadDivs[tag + 1], 'hide');
+			// add back button
+			backButton.onclick = closeStack;
+			backButton.innerHTML = "<";
+			galleryHeadDivs[tag + 1].insertBefore(backButton, galleryHeadDivs[tag + 1].firstChild);
+
 			PS.el.removeEventListener('click', openStack);
 			PS.grid = true;
+			PS.stack = false;
 			PS._shuffle();
-			var clickableElem = document.querySelectorAll('figure:not(.hide)')
 			if(PS.grid){
 				for (var i = 0; i < clickableElem.length; i++) {
 					classie.addClass(clickableElem[i], 'clickable')
 				}
 			}
+		},
+		closeStack = function(){
+			PS.grid = false;
+			PS.stack = true;
+			// show unselected tags
+			var elements =  PS.inner.children;
+			// console.log(PS.inner.children);
+			for (var i = 0; i < elements.length; i++) {
+				classie.removeClass( elements[i], 'hide' );
+				classie.removeClass( elements[i], 'clickable' );
+			}
+			PS._shuffle();
 		};
 		// if left click go to stack one, if right, go to stack 2
 		PS.el.addEventListener('click', openStack);
@@ -333,7 +346,9 @@
 				var l = 0, c = 0, cntItemsAnim = 0;
 				// Add Items to grid
 				if(PS.stacks && PS.grid ){
-					var items = PS.stacks[PS.stacks.selected];
+					var tag = '.' + PS.options.tags[PS.stackSelected];
+					var items = document.querySelectorAll(tag);
+					console.log(items, tag);
 				}else{
 					var items = PS.allItems;
 				}
@@ -383,11 +398,13 @@
 					else {
 						var posX1 = (PS.sizes.inner.width/8),
 						posX2 = PS.sizes.inner.width < 1500? posX1 * 4 : posX1 * 5,
-						posY = (PS.sizes.inner.height/4),
+						posY = (PS.sizes.inner.height/5),
 						rotate =  ' rotate(' + Math.floor( Math.random() * (PS.rotation.max - PS.rotation.min + 1) + PS.rotation.min ) + 'deg)';
 						if(PS.stacks && PS.started){
 							if (!PS.grid) {
 								// moveit to stacks
+								console.log("moving to stacks");
+								PS.el.addEventListener('click', PS._openStack);
 								if(item.dataset.tag === PS.options.tags[0]){
 									var transformation = 'translate(' + posX1 + 'px,' +  posY + 'px)' + rotate;
 								}else{
@@ -421,7 +438,7 @@
 	}
 
 	Photostack.prototype._getSizes = function() {
-		console.log(this.inner.offsetWidth)
+		// console.log(this.inner.offsetWidth)
 		this.sizes = {
 			inner : { width : this.inner.offsetWidth, height : this.inner.offsetHeight },
 			item : { width : this.currentItem.offsetWidth, height : this.currentItem.offsetHeight }
@@ -432,7 +449,7 @@
 			columns : Math.ceil(this.sizes.inner.height / (this.sizes.item.height * this.overlapFactor) )
 		};
 		this.gridMargin = (this.inner.offsetWidth - (this.gridSettings.lines * this.sizes.item.width))/2;
-		console.log(this.inner.offsetWidth, (this.gridSettings.lines * this.sizes.item.width), this.gridMargin, this.overlapFactor);
+		// console.log(this.inner.offsetWidth, (this.gridSettings.lines * this.sizes.item.width), this.gridMargin, this.overlapFactor);
 		this.extra ={
 			X : (this.gridSettings.lines * this.sizes.item.width * this.overlapFactor + this.sizes.item.width/2 - this.sizes.inner.width) / 2,
 			Y : (this.gridSettings.columns * this.sizes.item.height * this.overlapFactor + this.sizes.item.height/2 - this.sizes.inner.height) / 2,
