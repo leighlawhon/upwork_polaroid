@@ -24,21 +24,21 @@
 	height: 100%;
 	width: 100%;
 }
-figure.hide{
+.hide{
 	-webkit-transition: opacity 1s, visibility 0s 1s;
 	transition: opacity 1s, visibility 0s 1s;
 	opacity: 0;
 	visibility: hidden;
-	left:-5000px;
+	display:none !important;
 }
-.photostack-start, .photostack-stacks {
+.photostack-start {
 	cursor: pointer;
 }
 
 /* Wrapper and figures */
 
 /* The size of this wrapper can be smaller if the items should not be scattered across the whole container */
-.photostack > div {
+.photostack > #photos {
 	width: 100%;
 	height: 100%;
 	margin: 0 auto;
@@ -256,7 +256,7 @@ figure.hide{
 }
 
 /* Hide figure overlay when it becomes current */
-figure.photostack-current::after {
+figure.photostack-current::after, .photostack-stacks figure.clickable::after {
 	-webkit-transition: opacity 0.6s, visibility 0s 0.6s;
 	transition: opacity 0.6s, visibility 0s 0.6s;
 	opacity: 0;

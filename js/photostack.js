@@ -90,7 +90,7 @@
 
 	function Photostack( el, options ) {
 		this.el = el;
-		this.inner = this.el.querySelector( 'div' );
+		this.inner = this.el.querySelector( '#photos' );
 		this.allItems = [].slice.call( this.inner.children );
 		this.allItemsCount = this.allItems.length;
 		if( !this.allItemsCount ) return;
@@ -262,31 +262,40 @@
 		PS._shuffle();
 	}
 	Photostack.prototype._openToStacks = function( ) {
-		var PS = this;
-		var openStack = function(e){
-			console.log( e.x,  (PS.sizes.inner.width/2));
-			if(e.x > (PS.sizes.inner.width/2)){
+		var PS = this,
+		openStack = function(e){
+			if(e.x < (PS.sizes.inner.width/2)){
 				var tag = 0;
-				PS.stacks.selected = 1;
 			}else{
 				var tag = 1;
-				PS.stacks.selected = 0;
 			};
-
-			var elements = document.querySelectorAll('.' + PS.options.tags[tag]);
+			PS.stacks.selected = tag;
+			var ele = 'figure:not(.' + PS.options.tags[tag] + ')';
+			var elements = document.querySelectorAll(ele);
+			console.log(elements);
 			for (var i = 0; i < elements.length; i++) {
+				console.log(elements[i]);
 				classie.addClass( elements[i], 'hide' );
 			}
+			var galleryHeadDivs = document.getElementById('galleryHead').querySelectorAll('h1');
+			for (var i = 0; i < galleryHeadDivs.length; i++) {
+				classie.addClass(galleryHeadDivs[i], 'hide')
+			};
+
+			classie.removeClass(galleryHeadDivs[tag + 1], 'hide');
 			PS.el.removeEventListener('click', openStack);
 			PS.grid = true;
 			PS._shuffle();
-			var galleryHead = document.createElement('h1');
-			galleryHead.innerHTML = 
-			PS._addHeader();
+			var clickableElem = document.querySelectorAll('figure:not(.hide)')
+			if(PS.grid){
+				for (var i = 0; i < clickableElem.length; i++) {
+					classie.addClass(clickableElem[i], 'clickable')
+				}
+			}
 		};
 		// if left click go to stack one, if right, go to stack 2
 		PS.el.addEventListener('click', openStack);
-
+		classie.removeClass(document.getElementById('galleryHead-0'), 'hide')
 		if( PS.isShuffling ) {
 			return false;
 		}
@@ -469,7 +478,7 @@
 			PS.extra.Y = -20;
 		}
 		// populate the positions grid
-		console.log(PS.gridSettings.columns, PS.gridSettings.lines);
+		// console.log(PS.gridSettings.columns, PS.gridSettings.lines);
 		for( var i = 0; i < PS.gridSettings.columns; ++i ) {
 			var col = grid[ i ] = [];
 			for( var j = 0; j < PS.gridSettings.lines; ++j ) {
@@ -550,25 +559,17 @@
 			}
 		}
 	}
-	Photostack.prototype._addHeader = function(elements) {
-		var PS = this,
-		header = document.getElementById('galleryDiv');
-		if(!header){
-			var galleryDiv = document.createElement('div');
-			galleryDiv.id = 'galleryDiv';
-			PS.el.insertBefore(galleryDiv, PS.el.firstChild)
-			header = document.getElementById('galleryDiv');
-		}else{
-			header.innerHTML ='';
-		}
-		if (elements.length) {
-			for (var i = 0; i < elements.length; i++) {
-				header.appendChild(elements[i]);
-			}
-		}else{
-			header.appendChild(elements)
-		}
-	}
+	// Photostack.prototype._addHeader = function(elements) {
+		var PS = this;
+
+		// if (elements.length) {
+		// 	for (var i = 0; i < elements.length; i++) {
+		// 		header.appendChild(elements[i]);
+		// 	}
+		// }else{
+		// 	header.appendChild(elements)
+		// }
+	// }
 	// add to global namespace
 	window.Photostack = Photostack;
 

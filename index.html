@@ -15,18 +15,15 @@
 	<body>
 		<div class="container">
 			<section id="photostack-2" class="photostack photostack-start">
-				<div id="photos">
-
-				</div>
+				<div class="" id="galleryHead"></div>
+				<div id="photos"></div>
 			</section>
-
-
 		</div><!-- /container -->
 		<script src="js/classie.js"></script>
 		<script src="js/loadImages.js"></script>
 		<script src="js/photostack.js"></script>
 		<script>
-			imageJson.addImages(
+			imageJson.loadFile(
 				'js/image.json',
 				'photostack-2',
 				function() {
@@ -36,7 +33,19 @@
 						},
 						tags:['image1','image2']
 					})
-				});
+				}
+			);
+				// imageJson.loadFile(
+				// 	'js/galleryInfo.json',
+				// 	'photostack-2',
+				// 	function() {
+				// 		new Photostack( document.getElementById( 'photostack-2' ), {
+				// 			callback : function( item ) {
+				// 				//console.log(item)
+				// 			},
+				// 			tags:['image1','image2']
+				// 		})
+				// 	});
 
 		</script>
 	</body>

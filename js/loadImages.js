@@ -1,5 +1,5 @@
 var imageJson = (function(){
-  var addImages = function(url, container, callback){
+  var loadFile = function(url, container, callback){
     var xhr =  new XMLHttpRequest;
     xhr.open('GET', url)
     xhr.send();
@@ -8,21 +8,39 @@ var imageJson = (function(){
         console.error('Error: ', xhr.status);
       }
       // console.log(xhr.responseText);
-      var json = JSON.parse(xhr.responseText);
-      addFigures.apply(json.images, [container, callback])
+      var json = JSON.parse(xhr.responseText),
+      containerDiv = document.getElementById(container);
+      addFigures.apply(json, [containerDiv, callback])
+      addHeaders.apply(json, [containerDiv])
     }
-  }
-  var addFigures = function(container, callback){
-    var imageList = ''
-    var ele = document.getElementById(container).querySelector( 'div' );
-    for (var i = 0; i < this.length; i++) {
-      var figure = '<figure data-tag=' + this[i].tag + ' class="' + this[i].tag  + '"> <a href=' + this[i].image_link + ' class="photostack-img"><img src=' + this[i].image_url + ' alt="img04"/></a> <figcaption> ' + this[i].caption + ' for tag: ' + this[i].tag + ' </figcaption> </figure>'
+  },
+  addFigures = function(containerDiv, callback){
+    console.log(containerDiv);
+    var imageList = '',
+    ele = containerDiv.querySelector( '#photos' ),
+    images = this.images;
+    for (var i = 0; i < images.length; i++) {
+      var figure = '<figure data-tag=' + images[i].tag + ' class="' + images[i].tag  + '"> <a href=' + images[i].image_link + ' class="photostack-img"><img src=' + images[i].image_url + ' alt="img04"/></a> <figcaption> ' + images[i].caption + ' for tag: ' + images[i].tag + ' </figcaption> </figure>'
       imageList += figure;
     }
     ele.innerHTML = imageList;
     callback();
+  },
+  addHeaders = function(containerDiv){
+    console.log(this);
+    var headers = this.gallery_info,
+    headDiv = containerDiv.querySelector('#galleryHead');
+    for (var i = 0; i < headers.length; i++) {
+      var head = document.createElement('h1');
+      head.id = 'galleryHead-' + i;
+      head.setAttribute('class', 'hide');
+      head.innerHTML = headers[i].name;
+      headDiv.appendChild(head);
+    }
+
   }
   return {
-    addImages: addImages
+    loadFile: loadFile
   }
+
 })();

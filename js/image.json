@@ -1,14 +1,14 @@
 {
-  "gallery_info":{
-    "name":"Poloroid Gallery",
-    "left_gallery": "Gallery 1",
-    "right_gallery": "Gallery 2"
-  },
+  "gallery_info":[
+    {"name":"Poloroid Gallery"},
+    {"name": "Gallery 1"},
+    {"name": "Gallery 2"}
+  ],
   "images":[{
       "image_url": "img/1.jpg",
       "image_link": "http://goo.gl/49lN3k",
       "alt": "alt text",
-      "caption": "<p>this is html<a href='http://goo.gl/49lN3k'>link</a></p>" ,
+      "caption": "<p>this is html <a href='http://goo.gl/49lN3k'>link</a></p>" ,
       "tag": "image1"
     },{
       "image_url": "img/2.jpg",
@@ -20,7 +20,7 @@
       "image_url": "img/3.jpg",
       "image_link": "http://goo.gl/49lN3k",
       "alt": "alt text",
-      "caption": "<p>this is html<a href='http://goo.gl/49lN3k'>link</a></p>",
+      "caption": "<p>this is html <a onclick='alert(\"hi\")' href='http://goo.gl/49lN3k'>link</a></p>",
       "tag": "image1"
     },{
       "image_url": "img/4.jpg",
@@ -32,7 +32,7 @@
       "image_url": "img/5.jpg",
       "image_link": "http://goo.gl/49lN3k",
       "alt": "alt text",
-      "caption": "<p>this is html<a href='http://goo.gl/49lN3k'>link</a></p>",
+      "caption": "<p>this is html <a href='http://goo.gl/49lN3k'>link</a></p>",
       "tag": "image2"
     },{
       "image_url": "img/6.jpg",
