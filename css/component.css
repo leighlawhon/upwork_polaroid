@@ -8,32 +8,44 @@
 	font-weight: normal;
 	font-style: normal;
 }
-
+#photos {
+	width: 100%;
+	height: 100%;
+	margin: 0 auto;
+}
+#galleryDiv{
+	margin-top: 0px;
+}
 .photostack {
 	background: #ddd;
 	position: absolute;
 	text-align: center;
-	overflow: hidden;
+	overflow: auto;
 	height: 100%;
 	width: 100%;
 }
-
-.photostack-start {
+figure.hide{
+	-webkit-transition: opacity 1s, visibility 0s 1s;
+	transition: opacity 1s, visibility 0s 1s;
+	opacity: 0;
+	visibility: hidden;
+	left:-5000px;
+}
+.photostack-start, .photostack-stacks {
 	cursor: pointer;
 }
 
 /* Wrapper and figures */
 
 /* The size of this wrapper can be smaller if the items should not be scattered across the whole container */
-#photos {
+.photostack > div {
 	width: 100%;
 	height: 100%;
+	margin: 0 auto;
 }
-#galleryDiv{
-	margin-top: 0px;
-}
+
 .photostack figure {
-	width: 240px;
+	width: 320px;
 	height: auto;
 	position: relative;
 	display: inline-block;
@@ -58,12 +70,13 @@
 .photostack-img {
 	outline: none;
 	display: block;
-	width: 240px;
+	width: 100%;
 	height: 240px;
 	background: #f9f9f9;
+	overflow: hidden;
 }
-.photostack-img img{
-	width: 100%
+.photostack-img img {
+    width: 100%;
 }
 .photostack-back {
 	display: none;
@@ -169,7 +182,7 @@
 /* Overlays */
 
 /* Initial overlay on photostack container */
-.js .photostack-transition::before {
+.js .photostack::before {
 	content: '';
 	position: absolute;
 	width: 100%;
@@ -178,27 +191,21 @@
 	top: 0;
 	left: 0;
 	z-index: 100;
-	-webkit-transition: opacity 1s, visibility 1s 1s;
-	transition: opacity 1s, visibility 1s 1s;
+	-webkit-transition: opacity 0.3s, visibility 0s 0.3s;
+	transition: opacity 0.3s, visibility 0s 0.3s;
 }
-/*hide if grid*/
-.js .photostack-transition.photostack-grid::before {
-	content: none;
-	position: absolute;
-	width: 0%;
-	height: 0%;
-}
-.js .photostack-transition.photostack-grid{
-	overflow: scroll;
-}
-.js .photostack-transition::before {
-	-webkit-transition: opacity 1s;
-	transition: opacity 1s;
+
+.js .photostack-start::before, .js .photostack-stacks.photostack-transition::before {
+	-webkit-transition: opacity 0.3s;
+	transition: opacity 0.3s;
 }
 
 /* Button on photostack container */
-/*.js .photostack-transition::after {
+.js .photostack-stacks::after {
 	content: 'View Gallery 1';
+}
+.js .photostack::after {
+	content: 'View Gallery';
 	font-weight: 400;
 	position: absolute;
 	border: 3px solid #fff;
@@ -214,17 +221,21 @@
 	letter-spacing: 1px;
 	cursor: pointer;
 	z-index: 101;
-}*/
+}
 
-.js .photostack-transition::before,
-.js .photostack-transition::after {
+.js .photostack::before,
+.js .photostack::after {
 	opacity: 0;
 	visibility: hidden;
 }
 
-.js .photostack-transition::before,
-.js .photostack-transition:hover::after,
-.touch .photostack-transition::after  {
+/*.js .photostack-stacks::before,
+.js .photostack-stacks:hover::after,
+.touch .photostack-stacks::after  */
+.js .photostack-start::before,
+.js .photostack-start:hover::after,
+.touch .photostack-start::after,
+{
 	opacity: 1;
 	visibility: visible;
 }
@@ -252,13 +263,6 @@ figure.photostack-current::after {
 	visibility: hidden;
 }
 
-figure.hide{
-	-webkit-transition: opacity 1s, visibility 0s 1s;
-	transition: opacity 1s, visibility 0s 1s;
-	opacity: 0;
-	visibility: hidden;
-	left:-5000px;
-}
 /* Special classes for transitions and perspective */
 .photostack-transition figure {
 	-webkit-transition: -webkit-transform 0.6s ease-in-out;

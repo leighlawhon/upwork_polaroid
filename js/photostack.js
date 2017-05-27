@@ -24,6 +24,7 @@
 		Modernizr.testStyles('#modernizr{' + prop + ':' + val + ';}', function (el, rule) {
 			computedStyle = window.getComputedStyle ? getComputedStyle(el, null).getPropertyValue(prop) : '';
 		});
+
 		return (computedStyle === val);
 	});
 
@@ -48,7 +49,11 @@
 		}
 		return a;
 	}
-
+	function transformer (item, transformation){
+		item.style.WebkitTransform = transformation;
+		item.style.msTransform = transformation;
+		item.style.transform = transformation;
+	}
 	function shuffleMArray( marray ) {
 		var arr = [], marrlen = marray.length, inArrLen = marray[0].length;
 		for(var i = 0; i < marrlen; i++) {
@@ -86,7 +91,6 @@
 	function Photostack( el, options ) {
 		this.el = el;
 		this.inner = this.el.querySelector( 'div' );
-
 		this.allItems = [].slice.call( this.inner.children );
 		this.allItemsCount = this.allItems.length;
 		if( !this.allItemsCount ) return;
@@ -94,198 +98,248 @@
 		this.itemsCount = this.items.length;
 		// index of the current photo
 		this.current = 0;
+		this.openToDefault = true;
+		this.started = false;
+		this.grid = false;
 		this.options = extend( {}, this.options );
-  		extend( this.options, options );
-  		this._init();
-			if(this.options.tags){
-				var set = {0:[],1:[], selected:0};
-				for (var i = 0; i < this.allItems.length; i++) {
-					console.log(this.allItems[i].dataset.tag);
-					this.allItems[i].dataset.tag === this.options.tags[0] ? set[0].push(this.allItems[i]) : set[1].push(this.allItems[i])
-				}
-				this.stacks = set
+		this.rotation = {
+			max: 35,
+			min: -35
+		}
+		extend( this.options, options );
+		if(this.options.tags){
+			// setup stacks
+			var set = {0:[],1:[], selected:0};
+			for (var i = 0; i < this.allItems.length; i++) {
+				this.allItems[i].dataset.tag === this.options.tags[0] ? set[0].push(this.allItems[i]) : set[1].push(this.allItems[i])
 			}
+			this.stacks = set
+		}
+		this._init();
 	}
 
 	Photostack.prototype.options = {};
 
 	Photostack.prototype._init = function() {
-		this.currentItem = this.items[ this.current ];
-		this._getSizes();
-		this._initEvents();
+		// console.log(this.stacks);
+		if(this.stacks){
+			this.currentItem = this.items[ this.current ];
+			this._getSizes();
+			this._initEvents();
+		}else{
+			this.currentItem = this.items[ this.current ];
+			this._addNavigation();
+			this._getSizes();
+			this._initEvents();
+		}
+	}
+
+	Photostack.prototype._addNavigation = function() {
+		// add nav dots
+		this.nav = document.createElement( 'nav' )
+		var inner = '';
+		for( var i = 0; i < this.itemsCount; ++i ) {
+			inner += '<span></span>';
+		}
+		this.nav.innerHTML = inner;
+		this.el.appendChild( this.nav );
+		this.navDots = [].slice.call( this.nav.children );
 	}
 
 	Photostack.prototype._initEvents = function() {
 		var PS = this,
-			beforeStep = classie.hasClass( PS.el, 'photostack-start' );
-		if( beforeStep ) {
-			PS._openToShuffle();
-			var container = PS.el
-			var screen =  PS.sizes.inner;
-			var tags = PS.options.tags
-			setTimeout(function(){ PS._addOverlay() }, 500);
-		}
-		else {
-			PS._addOverlay();
-		}
-		window.addEventListener( 'resize', function() {
-			if(!classie.hasClass(PS.el, 'photostack-grid')){
-				PS._resizeHandler();
-			}
-		});
-	}
-	Photostack.prototype._addOverlay = function(){
-		var
-		PS = this,
-		beforeStep = classie.hasClass( PS.el, 'photostack-start' ),
-		addOverlayClasses = function() {
-			var setTransition = function() {
+			// starts with scattered and then goes to trasition;
+			beforeStep = classie.hasClass( this.el, 'photostack-start' ),
+			setTransition = function() {
 				if( support.transitions ) {
 					classie.addClass( PS.el, 'photostack-transition' );
 				}
-			}
-			if( beforeStep ) {
-				classie.removeClass( PS.el, 'photostack-start' );
+			},
+			goToGallery = function() {
+				// If it is the first view
 				setTransition();
+				PS.started = true;
+				if(!PS.stacks){
+					classie.removeClass( PS.el, 'photostack-start' );
+					this.removeEventListener( 'click', goToGallery );
+					PS._showPhoto( PS.current );
+				}else{
+					classie.removeClass( PS.el, 'photostack-start' );
+					classie.addClass( PS.el, 'photostack-stacks' );
+					PS._openToStacks()
+				}
+			};
+
+		if( beforeStep) {
+			if(!PS.stacks){
+				// Shuffle and add overlay with listner
+				PS._shuffle();
+				PS.el.addEventListener( 'click', goToGallery );
+			}else{
+				// wait a few second after open and shuffle to stacks
+				PS._shuffle();
+				setTimeout(goToGallery, 500)
 			}
-			else {
-				PS.openDefault = true;
-				setTimeout( setTransition, 25 );
-			}
-			PS.started = true;
-			PS._showPhoto( PS.current );
-		},
-		clickOverlay = function(e){
-			e.target.removeEventListener('click', clickOverlay);
-			e.x > (screen.width/2) ? PS._openStack(0) : PS._openStack(1);
 		}
-		PS.el.addEventListener('click', clickOverlay);
-		var galleryHead = document.createElement('h1');
-		galleryHead.innerHTML = 'Polaroid Gallery ';
-		PS._addHeader(galleryHead);
-		addOverlayClasses();
-	};
-	Photostack.prototype._openStack = function(tag){
-		var PS = this
-		var elements = document.querySelectorAll('.' + PS.options.tags[tag]);
-		tag? PS.stacks.selected = 0: PS.stacks.selected = 1;
-		for (var i = 0; i < elements.length; i++) {
-			classie.addClass( elements[i], 'hide' );
+		else {
+			PS.openToDefault = true;
+			setTimeout( setTransition, 25 );
 		}
-		var galleryHead = document.createElement('h1');
-		galleryHead.innerHTML = 'Gallery 1';
-		var galleryButton = document.createElement('button');
-		galleryButton.innerHTML = 'Back';
-		galleryButton.onclick = function(){
-			// PS._openToStacks();
+		if(!this.stacks){
+			this.navDots.forEach( function( dot, idx ) {
+				dot.addEventListener( 'click', function() {
+					// rotate the photo if clicking on the current dot
+					if( idx === PS.current ) {
+						PS._rotateItem();
+					}
+					else {
+						// if the photo is flipped then rotate it back before shuffling again
+						var callback = function() { PS._showPhoto( idx ); }
+						if( PS.flipped ) {
+							PS._rotateItem( callback );
+						}
+						else {
+							callback();
+						}
+					}
+				} );
+			} );
 		}
-		PS._addHeader([galleryHead, galleryButton]);
-		PS._openToGrid();
+		window.addEventListener( 'resize', function() { PS._resizeHandler(); } );
 	}
-	Photostack.prototype._addHeader = function(elements) {
-		var PS = this,
-		header = document.getElementById('galleryDiv');
-		if(!header){
-			var galleryDiv = document.createElement('div');
-			galleryDiv.id = 'galleryDiv';
-			PS.el.insertBefore(galleryDiv, PS.el.firstChild)
-			header = document.getElementById('galleryDiv');
-		}else{
-			header.innerHTML ='';
+
+	Photostack.prototype._resizeHandler = function() {
+		var PS = this;
+		function delayed() {
+			PS._resize();
+			PS._resizeTimeout = null;
 		}
-		if (elements.length) {
-			for (var i = 0; i < elements.length; i++) {
-				header.appendChild(elements[i]);
-			}
-		}else{
-			header.appendChild(elements)
+		if ( PS._resizeTimeout ) {
+			clearTimeout( PS._resizeTimeout );
+		}
+		PS._resizeTimeout = setTimeout( delayed, 100 );
+	}
+
+	Photostack.prototype._resize = function() {
+		var PS = this,
+		callback = function() { PS._shuffle( true ); }
+		PS._getSizes();
+		if( PS.started && PS.flipped && !PS.stacks) {
+			PS._rotateItem( callback );
+		}
+		else {
+			callback();
 		}
 	}
 
 	Photostack.prototype._showPhoto = function( pos ) {
-		console.log(pos);
-		if( this.isShuffling ) {
+		var PS = this;
+		if( PS.isShuffling ) {
 			return false;
 		}
-		this.isShuffling = true;
+		PS.isShuffling = true;
+		// if there is something behind..
+		if( classie.hasClass( PS.currentItem, 'photostack-flip' ) ) {
+			PS._removeItemPerspective();
+			if(!PS.stacks){
+				classie.removeClass( PS.navDots[ PS.current ], 'flippable' );
+				classie.removeClass( PS.navDots[ PS.current ], 'current' );
+			}
+		}
+		classie.removeClass( PS.currentItem, 'photostack-current' );
+
+		// change current
+		PS.current = pos;
+		PS.currentItem = PS.items[ PS.current ];
+			classie.addClass( PS.navDots[ PS.current ], 'current' );
 
 		// if there is something behind..
-		if( classie.hasClass( this.currentItem, 'photostack-flip' ) ) {
-			this._removeItemPerspective();
+		if( PS.currentItem.querySelector( '.photostack-back' ) ) {
+			// nav dot gets class flippable
+			classie.addClass( PS.navDots[ pos ], 'flippable' );
 		}
-		//
-		classie.removeClass( this.currentItem, 'photostack-current' );
-		//
-		// // change current
-		this.current = pos;
-		this.currentItem = this.items[ this.current ];
-		//
-		// // shuffle a bit
-		this._openToShuffle();
+		// shuffle a bit
+		PS._shuffle();
+	}
+	Photostack.prototype._openToStacks = function( ) {
+		var PS = this;
+		var openStack = function(e){
+			console.log( e.x,  (PS.sizes.inner.width/2));
+			if(e.x > (PS.sizes.inner.width/2)){
+				var tag = 0;
+				PS.stacks.selected = 1;
+			}else{
+				var tag = 1;
+				PS.stacks.selected = 0;
+			};
+
+			var elements = document.querySelectorAll('.' + PS.options.tags[tag]);
+			for (var i = 0; i < elements.length; i++) {
+				classie.addClass( elements[i], 'hide' );
+			}
+			PS.el.removeEventListener('click', openStack);
+			PS.grid = true;
+			PS._shuffle();
+			var galleryHead = document.createElement('h1');
+			galleryHead.innerHTML = 
+			PS._addHeader();
+		};
+		// if left click go to stack one, if right, go to stack 2
+		PS.el.addEventListener('click', openStack);
+
+		if( PS.isShuffling ) {
+			return false;
+		}
+		PS.isShuffling = true;
+		// shuffle a bit
+		PS._shuffle();
 	}
 
 	// display items (randomly)
-	Photostack.prototype._openToShuffle = function( resize ) {
+	Photostack.prototype._shuffle = function( resize ) {
+		var PS = this;
 		var iter = resize ? 1 : this.currentItem.getAttribute( 'data-shuffle-iteration' ) || 1;
-		if( iter <= 0 || !this.started || this.openDefault ) { iter = 1; }
+		if( iter <= 0 || !this.started || this.openToDefault ) { iter = 1; }
 		// first item is open by default
-		if( this.openDefault ) {
+		if( this.openToDefault ) {
 			// change transform-origin
 			classie.addClass( this.currentItem, 'photostack-flip' );
-			this.openDefault = false;
+			this.openToDefault = false;
 			this.isShuffling = false;
 		}
+
 		var
-			PS = this,
-			overlapFactor = .5,
-			// lines & columns
-			// the window width / an item widtha nd the over lap which is .5 lines = a % of the screen
-			lines = Math.ceil(PS.sizes.inner.width / (PS.sizes.item.width * overlapFactor) ),
-			// collumns = screen height/ height of the item * 0.5 = total items on screen
-			columns = Math.ceil(PS.sizes.inner.height / (PS.sizes.item.height * overlapFactor) ),
-			// since we are rounding up the previous calcs we need to know how much more we are adding to the calcs for both x and y axis
-			addX = lines * PS.sizes.item.width * overlapFactor + PS.sizes.item.width/2 - PS.sizes.inner.width,
-			addY = columns * PS.sizes.item.height * overlapFactor + PS.sizes.item.height/2 - PS.sizes.inner.height,
-			// we will want to center the grid
-			extraX = addX / 2,
-			extraY = addY / 2,
 			// max and min rotation angles
-			maxrot = 35, minrot = -35,
+			PS = this,
 			// translate/rotate items
 			moveItems = function() {
 				--iter;
 				// create a "grid" of possible positions
-				var grid = [];
-				// populate the positions grid
-				// for each collum ()
-				for( var i = 0; i < columns; ++i ) {
-					var col = grid[ i ] = [];
-					for( var j = 0; j < lines; ++j ) {
-						// xVal = [1-11] * (width * .5) - extraX
-						var xVal = j * (PS.sizes.item.width * overlapFactor) - extraX,
-							yVal = i * (PS.sizes.item.height * overlapFactor) - extraY,
-							olx = 0, oly = 0;
-						// if everything is at the begining, it's ok to overlap the center
-						// console.log(PS.started, iter, 'iter');
-
-						col[ j ] = { x : xVal + olx, y : yVal + oly };
-					}
-				}
+				var grid = PS._makeGrid(iter);;
 				// shuffle
-				grid = shuffleMArray(grid);
+				// if not stacks make grid and shuffle
+				if(!PS.grid){
+					grid = shuffleMArray(grid);
+				}
 				var l = 0, c = 0, cntItemsAnim = 0;
-				PS.allItems.forEach( function( item, i ) {
-					// console.log(item);
+				// Add Items to grid
+				if(PS.stacks && PS.grid ){
+					var items = PS.stacks[PS.stacks.selected];
+				}else{
+					var items = PS.allItems;
+				}
+				items.forEach( function( item, i ) {
 					// pick a random item from the grid
-					if( l === lines - 1 ) {
-						c = c === columns - 1 ? 0 : c + 1;
+					if( l === PS.gridSettings.lines - 1 ) {
+						c = c === PS.gridSettings.columns - 1 ? 0 : c + 1;
 						l = 1;
 					}
 					else {
 						++l
 					}
 
-					var gridVal = grid[c][l-1],
+					var
+						gridVal = grid[c][l-1],
 						translation = { x : gridVal.x, y : gridVal.y },
 						onEndTransitionFn = function() {
 							++cntItemsAnim;
@@ -307,14 +361,41 @@
 								}
 							}
 						};
-						if (PS.options.tags &&  PS.started) {
-							PS._openToStacks(item, maxrot, minrot);
-						}else{
-							var transformation = 'translate(' + translation.x + 'px,' + translation.y + 'px) rotate(' + Math.floor( Math.random() * (maxrot - minrot + 1) + minrot ) + 'deg)';
-							item.style.WebkitTransform = transformation;
-							item.style.msTransform = transformation;
-							item.style.transform = transformation;
+					// if its the current item and not stacks, move it to the center;
+					if(PS.items.indexOf(item) === PS.current && PS.started && iter === 0 && !PS.stacks) {
+						var transformation = 'translate(' + PS.centerItem.x + 'px,' + PS.centerItem.y + 'px) rotate(0deg)';
+						transformer(PS.currentItem, transformation);
+						// if there is something behind..
+						if( PS.currentItem.querySelector( '.photostack-back' ) ) {
+							PS._addItemPerspective();
 						}
+						classie.addClass( PS.currentItem, 'photostack-current' );
+					}
+					else {
+						var posX1 = (PS.sizes.inner.width/8),
+						posX2 = PS.sizes.inner.width < 1500? posX1 * 4 : posX1 * 5,
+						posY = (PS.sizes.inner.height/4),
+						rotate =  ' rotate(' + Math.floor( Math.random() * (PS.rotation.max - PS.rotation.min + 1) + PS.rotation.min ) + 'deg)';
+						if(PS.stacks && PS.started){
+							if (!PS.grid) {
+								// moveit to stacks
+								if(item.dataset.tag === PS.options.tags[0]){
+									var transformation = 'translate(' + posX1 + 'px,' +  posY + 'px)' + rotate;
+								}else{
+									var transformation = 'translate(' + posX2 + 'px,' + posY + 'px)' + rotate;
+								}
+							}else{
+								// move to grid
+								var transformation = 'translate(' + translation.x + 'px,' + translation.y + 'px)';
+								transformer(item, translation)
+							}
+							transformer(item, transformation)
+						}else{
+							// moveit randomely
+							var translation = 'translate(' + translation.x + 'px,' + translation.y + 'px)' + rotate;
+							transformer(item, translation)
+						}
+					}
 
 					if( PS.started ) {
 						if( support.transitions ) {
@@ -326,139 +407,27 @@
 					}
 				} );
 			};
+
 		moveItems.call();
 	}
 
-	// display items in grid
-	Photostack.prototype._openToGrid = function( resize ) {
-		this._createGrid(resize, false, 1.05);
-	}
-	Photostack.prototype._openToStacks = function(item, maxrot, minrot){
-		var PS = this,
-		galleryHead = document.createElement('h1');
-		galleryHead.innerHTML = 'Back Gallery'
-		PS._addHeader(galleryHead);
-		PS._addOverlay()
-		if(item.dataset.tag === PS.options.tags[0]){
-			var transformation = 'translate(' + (PS.sizes.inner.width/8) + 'px,' + (PS.sizes.inner.height/4) + 'px) rotate(' + Math.floor( Math.random() * (maxrot - minrot + 1) + minrot ) + 'deg)';
-		}else{
-			var transformation = 'translate(' + (PS.sizes.inner.width/8 *5) + 'px,' + (PS.sizes.inner.height/4) + 'px) rotate(' + Math.floor( Math.random() * (maxrot - minrot + 1) + minrot ) + 'deg)';
-		}
-
-		item.style.WebkitTransform = transformation;
-		item.style.msTransform = transformation;
-		item.style.transform = transformation;
-		classie.removeClass(item, 'hide')
-	}
-	Photostack.prototype._createGrid = function(resize, shuffle, overlapFactor) {
-		var PS = this,
-		iter = resize ? 1 : this.currentItem.getAttribute( 'data-shuffle-iteration' ) || 1,
-		lines = Math.ceil(this.sizes.inner.width / (this.sizes.item.width) ),
-		columns = Math.ceil(this.sizes.inner.height / (this.sizes.item.height) );
-		--iter;
-		// create a "grid" of possible positions
-		var grid = [];
-		// populate the positions grid
-		// for each collum ()
-		for( var i = 0; i < columns; ++i ) {
-			var col = grid[ i ] = [];
-			for( var j = 0; j < lines; ++j ) {
-				// xVal = [1-11] * (width * .5) - extraX
-				var xVal = j * (PS.sizes.item.width * overlapFactor),
-					yVal = i * (PS.sizes.item.height * overlapFactor),
-					olx = 0, oly = 0;
-					if( PS.started && iter === 0 && shuffle) {
-						var ol = PS._isOverlapping( { x : xVal, y : yVal } );
-						if( ol.overlapping ) {
-							olx = ol.noOverlap.x;
-							oly = ol.noOverlap.y;
-							var r = Math.floor( Math.random() * 3 );
-							switch(r) {
-								case 0 : olx = 0; break;
-								case 1 : oly = 0; break;
-							}
-						}
-					}
-				col[ j ] = { x : xVal, y : yVal };
-			}
-		}
-		var self = this;
-		var getItems = function (){
-			if(self.stacks){
-				return self.stacks[self.stacks.selected];
-			}else{
-				return self.allItems;
-			}
-		}
-
-		this._placeItemsOnGrid(getItems(), grid, columns, lines, shuffle);
-	};
-	Photostack.prototype._placeItemsOnGrid = function (items, grid, columns, lines, shuffle){
-		if(shuffle){grid = shuffleMArray(grid);}
-		var l = 0, c = 0, cntItemsAnim = 0;
-		var self = this;
-		items.forEach( function( item, i ) {
-			// pick a random item from the grid
-			if( l === lines - 1 ) {
-				c = c === columns - 1 ? 0 : c + 1;
-				l = 1;
-			}
-			else {
-				++l
-			}
-			var gridVal = grid[c][l-1],
-				translation = { x : gridVal.x, y : gridVal.y },
-				onEndTransitionFn = function() {
-					++cntItemsAnim;
-					if( support.transitions ) {
-						this.removeEventListener( transEndEventName, onEndTransitionFn );
-					}
-					if( cntItemsAnim === self.allItemsCount && shuffle ) {
-						if( iter > 0 ) {
-							moveItems.call();
-						}
-						else {
-							// change transform-origin
-							classie.addClass( self.currentItem, 'photostack-flip' );
-							// all done..
-							self.isShuffling = false;
-							if( typeof self.options.callback === 'function' ) {
-								self.options.callback( self.currentItem );
-							}
-						}
-					}
-				},
-				translateItems = function(shuffle){
-					if (shuffle){
-						var transformation = 'translate(' + translation.x + 'px,' + translation.y + 'px) rotate(' + Math.floor( Math.random() * (maxrot - minrot + 1) + minrot ) + 'deg)';
-					}else{
-						var transformation = 'translate(' + translation.x + 'px,' + translation.y + 'px) ';
-					}
-					item.style.WebkitTransform = transformation;
-					item.style.msTransform = transformation;
-					item.style.transform = transformation;
-					classie.addClass(self.el, 'photostack-grid')
-				};
-			translateItems();
-			if( self.started ) {
-				if( support.transitions ) {
-					item.addEventListener( transEndEventName, onEndTransitionFn );
-				}
-				else {
-					onEndTransitionFn();
-				}
-			}
-		} );
-	}
-
-
-
 	Photostack.prototype._getSizes = function() {
+		console.log(this.inner.offsetWidth)
 		this.sizes = {
-			inner : { width : this.inner.offsetWidth, height : (this.inner.offsetHeight > 0? this.inner.offsetHeight : window.innerHeight) },
+			inner : { width : this.inner.offsetWidth, height : this.inner.offsetHeight },
 			item : { width : this.currentItem.offsetWidth, height : this.currentItem.offsetHeight }
 		};
-
+		this.overlapFactor = 0.5;
+		this.gridSettings = {
+			lines : Math.ceil(this.sizes.inner.width / (this.sizes.item.width * this.overlapFactor) ),
+			columns : Math.ceil(this.sizes.inner.height / (this.sizes.item.height * this.overlapFactor) )
+		};
+		this.gridMargin = (this.inner.offsetWidth - (this.gridSettings.lines * this.sizes.item.width))/2;
+		console.log(this.inner.offsetWidth, (this.gridSettings.lines * this.sizes.item.width), this.gridMargin, this.overlapFactor);
+		this.extra ={
+			X : (this.gridSettings.lines * this.sizes.item.width * this.overlapFactor + this.sizes.item.width/2 - this.sizes.inner.width) / 2,
+			Y : (this.gridSettings.columns * this.sizes.item.height * this.overlapFactor + this.sizes.item.height/2 - this.sizes.inner.height) / 2,
+		}
 		// translation values to center an item
 		this.centerItem = { x : this.sizes.inner.width / 2 - this.sizes.item.width / 2, y : this.sizes.inner.height / 2 - this.sizes.item.height / 2 };
 	}
@@ -475,14 +444,12 @@
 			( itemVal.y + dyItem ) < areaVal.y ||
 			itemVal.y > ( areaVal.y + dyArea )) ) {
 				// how much to move so it does not overlap?
-				// move right / or move right
-				var tags = this.options.tags;
-				// console.log(this);
-				var right = Math.random() > 0.5,
+				// move left / or move right
+				var left = Math.random() < 0.5,
 					randExtraX = Math.floor( Math.random() * (dxItem/4 + 1) ),
 					randExtraY = Math.floor( Math.random() * (dyItem/4 + 1) ),
-					noOverlapX = right ? (itemVal.x - areaVal.x + dxItem) * -1 - randExtraX : (areaVal.x + dxArea) - (itemVal.x + dxItem) + dxItem + randExtraX,
-					noOverlapY = right ? (itemVal.y - areaVal.y + dyItem) * -1 - randExtraY : (areaVal.y + dyArea) - (itemVal.y + dyItem) + dyItem + randExtraY;
+					noOverlapX = left ? (itemVal.x - areaVal.x + dxItem) * -1 - randExtraX : (areaVal.x + dxArea) - (itemVal.x + dxItem) + dxItem + randExtraX,
+					noOverlapY = left ? (itemVal.y - areaVal.y + dyItem) * -1 - randExtraY : (areaVal.y + dyArea) - (itemVal.y + dyItem) + dyItem + randExtraY;
 
 				return {
 					overlapping : true,
@@ -493,7 +460,41 @@
 			overlapping : false
 		}
 	}
+	Photostack.prototype._makeGrid = function (iter){
+		var PS = this;
+		var grid = [];
+		if(PS.grid){
+			PS.overlapFactor = 1.05;
+			PS.extra.X = -20;
+			PS.extra.Y = -20;
+		}
+		// populate the positions grid
+		console.log(PS.gridSettings.columns, PS.gridSettings.lines);
+		for( var i = 0; i < PS.gridSettings.columns; ++i ) {
+			var col = grid[ i ] = [];
+			for( var j = 0; j < PS.gridSettings.lines; ++j ) {
+				var xVal = j * (PS.sizes.item.width * PS.overlapFactor) - PS.extra.X,
+					yVal = i * (PS.sizes.item.height * PS.overlapFactor) - PS.extra.Y,
+					olx = 0, oly = 0;
+				// prevent overlap in the center for the center item
+				if( PS.started && iter === 0 && !PS.grid) {
+					var ol = PS._isOverlapping( { x : xVal, y : yVal } );
+					if( ol.overlapping ) {
+						olx = ol.noOverlap.x;
+						oly = ol.noOverlap.y;
+						var r = Math.floor( Math.random() * 3 );
+						switch(r) {
+							case 0 : olx = 0; break;
+							case 1 : oly = 0; break;
+						}
+					}
+				}
 
+				col[ j ] = { x : xVal + olx, y : yVal + oly };
+			}
+		}
+		return grid
+	}
 	Photostack.prototype._addItemPerspective = function() {
 		classie.addClass( this.el, 'photostack-perspective' );
 	}
@@ -504,20 +505,23 @@
 	}
 
 	Photostack.prototype._rotateItem = function( callback ) {
-		if( classie.hasClass( this.el, 'photostack-perspective' ) && !this.isRotating && !this.isShuffling ) {
-			this.isRotating = true;
+		var PS = this;
+		if( classie.hasClass( PS.el, 'photostack-perspective' ) && !PS.isRotating && !PS.isShuffling ) {
+			PS.isRotating = true;
 
-			var self = this, onEndTransitionFn = function() {
+			var
+			onEndTransitionFn = function() {
 					if( support.transitions && support.preserve3d ) {
 						this.removeEventListener( transEndEventName, onEndTransitionFn );
 					}
-					self.isRotating = false;
+					PS.isRotating = false;
 					if( typeof callback === 'function' ) {
 						callback();
 					}
 				};
 
 			if( this.flipped ) {
+				classie.removeClass( this.navDots[ this.current ], 'flip' );
 				if( support.preserve3d ) {
 					this.currentItem.style.WebkitTransform = 'translate(' + this.centerItem.x + 'px,' + this.centerItem.y + 'px) rotateY(0deg)';
 					this.currentItem.style.transform = 'translate(' + this.centerItem.x + 'px,' + this.centerItem.y + 'px) rotateY(0deg)';
@@ -527,6 +531,7 @@
 				}
 			}
 			else {
+				classie.addClass( this.navDots[ this.current ], 'flip' );
 				if( support.preserve3d ) {
 					this.currentItem.style.WebkitTransform = 'translate(' + this.centerItem.x + 'px,' + this.centerItem.y + 'px) translate(' + this.sizes.item.width + 'px) rotateY(-179.9deg)';
 					this.currentItem.style.transform = 'translate(' + this.centerItem.x + 'px,' + this.centerItem.y + 'px) translate(' + this.sizes.item.width + 'px) rotateY(-179.9deg)';
@@ -545,26 +550,23 @@
 			}
 		}
 	}
-	Photostack.prototype._resizeHandler = function() {
-		var self = this;
-		function delayed() {
-			self._resize();
-			self._resizeTimeout = null;
+	Photostack.prototype._addHeader = function(elements) {
+		var PS = this,
+		header = document.getElementById('galleryDiv');
+		if(!header){
+			var galleryDiv = document.createElement('div');
+			galleryDiv.id = 'galleryDiv';
+			PS.el.insertBefore(galleryDiv, PS.el.firstChild)
+			header = document.getElementById('galleryDiv');
+		}else{
+			header.innerHTML ='';
 		}
-		if ( this._resizeTimeout ) {
-			clearTimeout( this._resizeTimeout );
-		}
-		this._resizeTimeout = setTimeout( delayed, 100 );
-	}
-
-	Photostack.prototype._resize = function() {
-		var self = this, callback = function() { self._openToShuffle( true ); }
-		this._getSizes();
-		if( this.started && this.flipped ) {
-			this._rotateItem( callback );
-		}
-		else {
-			callback();
+		if (elements.length) {
+			for (var i = 0; i < elements.length; i++) {
+				header.appendChild(elements[i]);
+			}
+		}else{
+			header.appendChild(elements)
 		}
 	}
 	// add to global namespace

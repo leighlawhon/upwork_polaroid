@@ -6,26 +6,48 @@ const {width, height, scale} = Dimensions.get("window"),
     vmax = Math.max(vw, vh);
 
 export default StyleSheet.create({
-    "photostack": {
-        "background": "#ddd",
-        "position": "absolute",
-        "textAlign": "center",
-        "overflow": "hidden",
-        "height": "100%",
-        "width": "100%"
-    },
-    "photostack-start": {
-        "cursor": "pointer"
-    },
     "photos": {
         "width": "100%",
-        "height": "100%"
+        "height": "100%",
+        "marginTop": 0,
+        "marginRight": "auto",
+        "marginBottom": 0,
+        "marginLeft": "auto"
     },
     "galleryDiv": {
         "marginTop": 0
     },
+    "photostack": {
+        "background": "#ddd",
+        "position": "absolute",
+        "textAlign": "center",
+        "overflow": "auto",
+        "height": "100%",
+        "width": "100%"
+    },
+    "figurehide": {
+        "WebkitTransition": "opacity 1s, visibility 0s 1s",
+        "transition": "opacity 1s, visibility 0s 1s",
+        "opacity": 0,
+        "visibility": "hidden",
+        "left": -5000
+    },
+    "photostack-start": {
+        "cursor": "pointer"
+    },
+    "photostack-stacks": {
+        "cursor": "pointer"
+    },
+    "photostack > div": {
+        "width": "100%",
+        "height": "100%",
+        "marginTop": 0,
+        "marginRight": "auto",
+        "marginBottom": 0,
+        "marginLeft": "auto"
+    },
     "photostack figure": {
-        "width": 240,
+        "width": 320,
         "height": "auto",
         "position": "relative",
         "display": "inline-block",
@@ -59,9 +81,10 @@ export default StyleSheet.create({
     "photostack-img": {
         "outline": "none",
         "display": "block",
-        "width": 240,
+        "width": "100%",
         "height": 240,
-        "background": "#f9f9f9"
+        "background": "#f9f9f9",
+        "overflow": "hidden"
     },
     "photostack-img img": {
         "width": "100%"
@@ -164,7 +187,7 @@ export default StyleSheet.create({
         "WebkitTransitionDelay": "0.4s",
         "transitionDelay": "0.4s"
     },
-    "js photostack-transition::before": {
+    "js photostack::before": {
         "content": "''",
         "position": "absolute",
         "width": "100%",
@@ -173,29 +196,56 @@ export default StyleSheet.create({
         "top": 0,
         "left": 0,
         "zIndex": 100,
-        "WebkitTransition": "opacity 1s",
-        "transition": "opacity 1s",
-        "opacity": 1,
-        "visibility": "visible"
-    },
-    "js photostack-transitionphotostack-grid::before": {
-        "content": "none",
-        "position": "absolute",
-        "width": "0%",
-        "height": "0%"
-    },
-    "js photostack-transitionphotostack-grid": {
-        "overflow": "scroll"
-    },
-    "js photostack-transition::after": {
+        "WebkitTransition": "opacity 0.3s, visibility 0s 0.3s",
+        "transition": "opacity 0.3s, visibility 0s 0.3s",
         "opacity": 0,
         "visibility": "hidden"
     },
-    "js photostack-transition:hover::after": {
+    "js photostack-start::before": {
+        "WebkitTransition": "opacity 0.3s",
+        "transition": "opacity 0.3s",
         "opacity": 1,
         "visibility": "visible"
     },
-    "touch photostack-transition::after": {
+    "js photostack-stacksphotostack-transition::before": {
+        "WebkitTransition": "opacity 0.3s",
+        "transition": "opacity 0.3s"
+    },
+    "js photostack-stacks::after": {
+        "content": "'View Gallery 1'"
+    },
+    "js photostack::after": {
+        "content": "'View Gallery'",
+        "fontWeight": "400",
+        "position": "absolute",
+        "border": "3px solid #fff",
+        "textAlign": "center",
+        "whiteSpace": "nowrap",
+        "left": "50%",
+        "top": "50%",
+        "WebkitTransform": "translateY(-50%) translateX(-50%)",
+        "transform": "translateY(-50%) translateX(-50%)",
+        "paddingTop": 10,
+        "paddingRight": 20,
+        "paddingBottom": 10,
+        "paddingLeft": 20,
+        "color": "#fff",
+        "textTransform": "uppercase",
+        "letterSpacing": 1,
+        "cursor": "pointer",
+        "zIndex": 101,
+        "opacity": 0,
+        "visibility": "hidden"
+    },
+    "js photostack-start:hover::after": {
+        "opacity": 1,
+        "visibility": "visible"
+    },
+    "touch photostack-start::after": {
+        "opacity": 1,
+        "visibility": "visible"
+    },
+    "": {
         "opacity": 1,
         "visibility": "visible"
     },
@@ -217,13 +267,6 @@ export default StyleSheet.create({
         "transition": "opacity 0.6s, visibility 0s 0.6s",
         "opacity": 0,
         "visibility": "hidden"
-    },
-    "figurehide": {
-        "WebkitTransition": "opacity 1s, visibility 0s 1s",
-        "transition": "opacity 1s, visibility 0s 1s",
-        "opacity": 0,
-        "visibility": "hidden",
-        "left": -5000
     },
     "photostack-transition figure": {
         "WebkitTransition": "-webkit-transform 0.6s ease-in-out",
