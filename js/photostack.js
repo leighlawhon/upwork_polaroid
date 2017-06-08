@@ -136,15 +136,14 @@
 			this.nav.innerHTML = inner;
 			this.el.appendChild( this.nav );
 			this.navDots = [].slice.call( this.nav.children );
-			console.log(this.navDots);
 		}else{
 			var backButton = document.createElement('button');
 			// add back button
 			backButton.onclick = PS._closeStack.bind(PS);
 			backButton.setAttribute('id','backButton');
 			backButton.setAttribute('class','hide btn btn-default');
-			backButton.innerHTML = "<";
-			document.getElementById('galleryHead').appendChild(backButton);
+			backButton.innerHTML = '<i class="fa fa-chevron-circle-left" aria-hidden="true"></i>';
+			document.getElementById('galleryHead').insertBefore(backButton, document.getElementById('galleryHead').childNodes[0]);
 		}
 	}
 
@@ -188,7 +187,6 @@
 			setTimeout( setTransition, 25 );
 		}
 		if(!PS.stacks){
-			console.log(this);
 			this.navDots.forEach( function( dot, idx ) {
 				dot.addEventListener( 'click', function() {
 					// rotate the photo if clicking on the current dot
@@ -265,7 +263,6 @@
 		PS._shuffle();
 	}
 	Photostack.prototype._openToStacks = function( ) {
-		console.log("open to stacks");
 		var PS = this;
 		PS.grid = false;
 		PS.stack = true;
@@ -301,7 +298,6 @@
 		}
 		// hide unselected tags
 		for (var i = 0; i < elements.length; i++) {
-			// console.log(elements[i]);
 			classie.addClass( elements[i], 'hide' );
 		}
 
@@ -315,6 +311,8 @@
 		PS.stackSelected = -1;
 		// show unselected tags
 		var hiddenElem = PS.el.querySelectorAll('figure.hide');
+		classie.removeClass( PS.el, 'photostack-grid' );
+		classie.addClass( PS.el, 'photostack-stacks' );
 		var clickableElem = PS.el.querySelectorAll('figure.clickable');
 		for (var i = 0; i < hiddenElem.length; i++) {
 			classie.removeClass(hiddenElem[i], 'hide');
@@ -352,9 +350,9 @@
 		var
 			// max and min rotation angles
 			PS = this,
-			tag = '.' + PS.options.tags[PS.stackSelected],
 			items = PS.allItems;
 			if(PS.stacks && PS.grid ){
+				var tag = '.' + PS.options.tags[PS.stackSelected];
 				items = document.querySelectorAll(tag);
 
 			}
@@ -381,7 +379,6 @@
 					else {
 						++l
 					}
-					console.log(c,l, grid);
 					var
 						gridVal = grid[c][l-1],
 						translation = { x : gridVal.x, y : gridVal.y },
@@ -407,7 +404,6 @@
 						};
 					// if its the current item and not stacks, move it to the center;
 					if(PS.items.indexOf(item) === PS.current && PS.started && iter === 0 && !PS.stacks) {
-						// console.log('current');
 						var transformation = 'translate(' + PS.centerItem.x + 'px,' + PS.centerItem.y + 'px) rotate(0deg)';
 						transformer(PS.currentItem, transformation);
 						// if there is something behind..
@@ -418,7 +414,6 @@
 					}
 					else {
 						// set stacks
-						// console.log('set stacks');
 						var posX1 = (PS.sizes.inner.width/8),
 						posX2 = PS.sizes.inner.width < 1500? posX1 * 4 : posX1 * 5,
 						posY = (PS.sizes.inner.height/5),
@@ -426,7 +421,6 @@
 						if(PS.stacks && PS.started){
 							if (!PS.grid) {
 								// moveit to stacks
-								console.log("move to stacks");
 								if(item.dataset.tag === PS.options.tags[0]){
 									var transformation = 'translate(' + posX1 + 'px,' +  posY + 'px)' + rotate;
 								}else{
@@ -461,19 +455,25 @@
 	}
 
 	Photostack.prototype._getSizes = function() {
-		// console.log(this.inner.offsetWidth)
+		var currentTag = this.options.tags[this.stackSelected],
+		visibleItem = document.querySelector('.' + currentTag);
 		this.sizes = {
-			inner : { width : this.inner.offsetWidth, height : this.inner.offsetHeight },
-			item : { width : this.currentItem.offsetWidth, height : this.currentItem.offsetHeight }
+			inner : {
+				width : this.inner.offsetWidth,
+				height : this.inner.offsetHeight
+			},
+			item : {
+				width : visibleItem.offsetWidth,
+				height : visibleItem.offsetWidth
+			}
 		};
-		this.overlapFactor = 0.5;
+		this.overlapFactor = this.stacks ? 1.05 : 0.5;
 		this.gridSettings = {
 			itemsAcross : Math.ceil(this.sizes.inner.width / (this.sizes.item.width * this.overlapFactor) ),
-			rows : Math.ceil(this.sizes.inner.height / (this.sizes.item.height * this.overlapFactor) )
+			rows : this.stacks ? Math.ceil(this.allItemsCount/Math.ceil(this.sizes.inner.width / (this.sizes.item.width * this.overlapFactor) )) : Math.ceil(this.sizes.inner.height / (this.sizes.item.height * this.overlapFactor) )
 		};
-		console.log(this.gridSettings);
+
 		this.gridMargin = (this.inner.offsetWidth - (this.gridSettings.itemsAcross * this.sizes.item.width))/2;
-		// console.log(this.inner.offsetWidth, (this.gridSettings.itemsAcross * this.sizes.item.width), this.gridMargin, this.overlapFactor);
 		this.extra ={
 			X : (this.gridSettings.itemsAcross * this.sizes.item.width * this.overlapFactor + this.sizes.item.width/2 - this.sizes.inner.width) / 2,
 			Y : (this.gridSettings.rows * this.sizes.item.height * this.overlapFactor + this.sizes.item.height/2 - this.sizes.inner.height) / 2,
@@ -514,12 +514,10 @@
 		var PS = this;
 		var grid = [];
 		if(PS.grid){
-			PS.overlapFactor = 1.05;
 			PS.extra.X = -20;
 			PS.extra.Y = -20;
 		}
 		// populate the positions grid
-		// console.log(PS.gridSettings.rows, PS.gridSettings.itemsAcross);
 		for( var i = 0; i < PS.gridSettings.rows; ++i ) {
 			var col = grid[ i ] = [];
 			for( var j = 0; j < PS.gridSettings.itemsAcross; ++j ) {

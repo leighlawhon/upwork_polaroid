@@ -13,6 +13,11 @@
 	height: 100%;
 	margin: 0 auto;
 }
+.photostack-grid.photostack > #photos{
+	width: auto;
+	margin: 0px auto;
+	position: relative;
+}
 #galleryDiv{
 	margin-top: 0px;
 }
@@ -327,4 +332,17 @@ figure.photostack-current::after, .photostack-stacks figure.clickable::after {
 	background: #888;
 	-webkit-transform: scale(0.61);
 	transform: scale(0.61);
+}
+
+button#backButton {
+	background-color: transparent;
+	border: none;
+	width: 30px;
+	height: 30px;
+	font-size: 1.75em;
+	margin-right: 10px;
+}
+
+#galleryHead h1{
+	display: inline-block;
 }
